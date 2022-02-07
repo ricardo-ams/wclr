@@ -7,14 +7,32 @@ using namespace arma;
 void update_coefficients(arma::mat &R,
                          const arma::mat &U,
                          const arma::mat &X,
-                         const arma::colvec &y)
+                         const arma::colvec &y,
+                         Rcpp::List &log)
 {
   const int K = U.n_cols;
 
   for (int k = 0; k < K; k++)
   {
-    arma::mat W = arma::diagmat(U.col(k));
-    R.col(k) = arma::solve(X.t() * W * X, X.t() * W * y);
+    try
+    {
+      arma::mat W = arma::diagmat(U.col(k));
+      R.col(k) = arma::solve(X.t() * W * X, X.t() * W * y);
+    }
+    catch (const std::exception &ex)
+    {
+      Rcpp::List error = Rcpp::List::create(
+        Rcpp::Named("error") = ex.what());
+      error.attr("class") = "wclr.trace.error";
+      log.push_back(error);
+    }
+    catch (...)
+    {
+      Rcpp::List error = Rcpp::List::create(
+        Rcpp::Named("error") = "unknown exception");
+      error.attr("class") = "wclr.trace.error";
+      log.push_back(error);
+    }
   }
 }
 
@@ -113,6 +131,7 @@ bool update_membership(arma::mat &U,
       converged = false;
 
       for (int k = 0; k < K; k++)
+        // a negligible but non-zero membership value
         U(n, k) = EPS;
 
       U(n, min_k) = 1.0 - ((K - 1) * EPS);
@@ -176,7 +195,7 @@ Rcpp::List
     X1.cols(1, P) = X;
 
     // model
-    arma::mat coefficients(P + 1, K, arma::fill::zeros);
+    arma::mat coefficients(P + 1, K, arma::fill::randu);
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
 
@@ -195,41 +214,24 @@ Rcpp::List
       Rcpp::checkUserInterrupt();
 
       // update parameters
-      try
+      arma::mat Um = arma::pow(U, m);
+
+      update_coefficients(coefficients, Um, X1, y, log);
+
+      for (int k = 0; k < K; k++)
       {
-        arma::mat Um = arma::pow(U, m);
-
-        update_coefficients(coefficients, Um, X1, y);
-
-        for (int k = 0; k < K; k++)
-        {
-          fitted_values.col(k) = X1 * coefficients.col(k);
-          residuals.col(k)     = y - fitted_values.col(k);
-        }
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-              Rcpp::Named("iter") = iterations,
-              Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-              Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
+        fitted_values.col(k) = X1 * coefficients.col(k);
+        residuals.col(k)     = y - fitted_values.col(k);
       }
-      catch (const std::exception &ex)
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = ex.what());
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
-      }
-      catch (...)
-      {
-        Rcpp::List error = Rcpp::List::create(
-            Rcpp::Named("error") = "unknown exception");
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+            Rcpp::Named("iter") = iterations,
+            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
+            Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
 
       // check convergence
@@ -256,7 +258,7 @@ Rcpp::List
     }
 
     // compute centroids
-    arma::mat centers(P, K, arma::fill::zeros);
+    arma::mat centers(P, K, arma::fill::randu);
     update_centers(centers, arma::pow(U, m), X);
 
     // build Rcpp model
@@ -317,7 +319,7 @@ Rcpp::List
     X1.cols(1, P) = X;
 
     // model
-    arma::mat centers(P, K, arma::fill::zeros);
+    arma::mat centers(P, K, arma::fill::randu);
 
     // dissimilarity (error) function
     auto E = [&](int n, int k)
@@ -336,35 +338,18 @@ Rcpp::List
       Rcpp::checkUserInterrupt();
 
       // update parameters
-      try
-      {
-        arma::mat Um = arma::pow(U, m);
+      arma::mat Um = arma::pow(U, m);
 
-        update_centers(centers, Um, X);
+      update_centers(centers, Um, X);
 
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-      }
-      catch (const std::exception &ex)
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = ex.what());
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
-      }
-      catch (...)
-      {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = "unknown exception");
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
 
       // check convergence
@@ -391,11 +376,11 @@ Rcpp::List
     }
 
     // compute coefficients
-    arma::mat coefficients(P + 1, K, arma::fill::zeros);
+    arma::mat coefficients(P + 1, K, arma::fill::randu);
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
 
-    update_coefficients(coefficients, arma::pow(U, m), X1, y);
+    update_coefficients(coefficients, arma::pow(U, m), X1, y, log);
 
     for (int k = 0; k < K; k++)
     {
@@ -463,10 +448,10 @@ Rcpp::List
     X1.cols(1, P) = X;
 
     // model
-    arma::mat coefficients(P + 1, K, arma::fill::zeros);
+    arma::mat coefficients(P + 1, K, arma::fill::randu);
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
-    arma::mat centers(P, K, arma::fill::zeros);
+    arma::mat centers(P, K, arma::fill::randu);
 
     // dissimilarity (error) function
     auto Ex = [&](int n, int k)
@@ -496,53 +481,36 @@ Rcpp::List
       Rcpp::checkUserInterrupt();
 
       // update parameters
-      try
+      arma::mat Um = arma::pow(U, m);
+
+      update_coefficients(coefficients, Um, X1, y, log);
+
+      for (int k = 0; k < K; k++)
       {
-        arma::mat Um = arma::pow(U, m);
-
-        update_coefficients(coefficients, Um, X1, y);
-
-        for (int k = 0; k < K; k++)
-        {
-          fitted_values.col(k) = X1 * coefficients.col(k);
-          residuals.col(k)     = y - fitted_values.col(k);
-        }
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        update_centers(centers, Um, X);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
+        fitted_values.col(k) = X1 * coefficients.col(k);
+        residuals.col(k)     = y - fitted_values.col(k);
       }
-      catch (const std::exception &ex)
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = ex.what());
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
-      catch (...)
+
+      update_centers(centers, Um, X);
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = "unknown exception");
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
 
       // check convergence
@@ -745,10 +713,10 @@ Rcpp::List
     X1.cols(1, P) = X;
 
     // model
-    arma::mat coefficients(P + 1, K, arma::fill::zeros);
+    arma::mat coefficients(P + 1, K, arma::fill::randu);
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
-    arma::mat centers(P, K, arma::fill::zeros);
+    arma::mat centers(P, K, arma::fill::randu);
     arma::cube weights(P, P, K, arma::fill::ones);
 
     // dissimilarity (error) function
@@ -778,72 +746,55 @@ Rcpp::List
       Rcpp::checkUserInterrupt();
 
       // update parameters
-      try
+      arma::mat Um = arma::pow(U, m);
+
+      update_coefficients(coefficients, Um, X1, y, log);
+
+      for (int k = 0; k < K; k++)
       {
-        arma::mat Um = arma::pow(U, m);
-
-        update_coefficients(coefficients, Um, X1, y);
-
-        for (int k = 0; k < K; k++)
-        {
-          fitted_values.col(k) = X1 * coefficients.col(k);
-          residuals.col(k)     = y - fitted_values.col(k);
-        }
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        update_centers(centers, Um, X);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        if (wnorm == "epg")
-          update_weights_epg(weights, Um, centers, X);
-        else if (wnorm == "epl")
-          update_weights_epl(weights, Um, centers, X);
-        else if (wnorm == "qpg")
-          update_weights_qpg(weights, Um, centers, X);
-        else if (wnorm == "qpl")
-          update_weights_qpl(weights, Um, centers, X);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
+        fitted_values.col(k) = X1 * coefficients.col(k);
+        residuals.col(k)     = y - fitted_values.col(k);
       }
-      catch (const std::exception &ex)
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = ex.what());
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
-      catch (...)
+
+      update_centers(centers, Um, X);
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = "unknown exception");
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
+      }
+
+      if (wnorm == "epg")
+        update_weights_epg(weights, Um, centers, X);
+      else if (wnorm == "epl")
+        update_weights_epl(weights, Um, centers, X);
+      else if (wnorm == "qpg")
+        update_weights_qpg(weights, Um, centers, X);
+      else if (wnorm == "qpl")
+        update_weights_qpl(weights, Um, centers, X);
+
+      if (trace)
+      {
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
 
       // check convergence
@@ -991,10 +942,10 @@ Rcpp::List
     X1.cols(1, P) = X;
 
     // model
-    arma::mat  coefficients(P + 1, K, arma::fill::zeros);
+    arma::mat  coefficients(P + 1, K, arma::fill::randu);
     arma::mat  fitted_values(N, K, arma::fill::zeros);
     arma::mat  residuals(N, K, arma::fill::zeros);
-    arma::mat  centers(P, K, arma::fill::zeros);
+    arma::mat  centers(P, K, arma::fill::randu);
     arma::cube weights(P, P, K, arma::fill::ones);
     arma::vec  alphas(K, arma::fill::ones);
     arma::vec  gammas(K, arma::fill::ones);
@@ -1026,87 +977,70 @@ Rcpp::List
       Rcpp::checkUserInterrupt();
 
       // update parameters
-      try
+      arma::mat Um = arma::pow(U, m);
+
+      update_coefficients(coefficients, Um, X1, y, log);
+
+      for (int k = 0; k < K; k++)
       {
-        arma::mat Um = arma::pow(U, m);
-
-        update_coefficients(coefficients, Um, X1, y);
-
-        for (int k = 0; k < K; k++)
-        {
-          fitted_values.col(k) = X1 * coefficients.col(k);
-          residuals.col(k)     = y - fitted_values.col(k);
-        }
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        update_centers(centers, Um, X);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        if (wnorm == "epg")
-          update_weights_epg(weights, Um, centers, X);
-        else if (wnorm == "epl")
-          update_weights_epl(weights, Um, centers, X);
-        else if (wnorm == "qpg")
-          update_weights_qpg(weights, Um, centers, X);
-        else if (wnorm == "qpl")
-          update_weights_qpl(weights, Um, centers, X);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
-
-        if (balance == "pg")
-          update_balance_pg(alphas, gammas, Um, Ey, Ex);
-        else if (balance == "pl")
-          update_balance_pl(alphas, gammas, Um, Ey, Ex);
-
-        if (trace)
-        {
-          Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update balance",
-            Rcpp::Named("loss") = J(Um, E));
-          info.attr("class") = "wclr.trace.info";
-          log.push_back(info);
-        }
+        fitted_values.col(k) = X1 * coefficients.col(k);
+        residuals.col(k)     = y - fitted_values.col(k);
       }
-      catch (const std::exception &ex)
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = ex.what());
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
-      catch (...)
+
+      update_centers(centers, Um, X);
+
+      if (trace)
       {
-        Rcpp::List error = Rcpp::List::create(
-          Rcpp::Named("error") = "unknown exception");
-        error.attr("class") = "wclr.trace.error";
-        log.push_back(error);
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
+      }
+
+      if (wnorm == "epg")
+        update_weights_epg(weights, Um, centers, X);
+      else if (wnorm == "epl")
+        update_weights_epl(weights, Um, centers, X);
+      else if (wnorm == "qpg")
+        update_weights_qpg(weights, Um, centers, X);
+      else if (wnorm == "qpl")
+        update_weights_qpl(weights, Um, centers, X);
+
+      if (trace)
+      {
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
+      }
+
+      if (balance == "pg")
+        update_balance_pg(alphas, gammas, Um, Ey, Ex);
+      else if (balance == "pl")
+        update_balance_pl(alphas, gammas, Um, Ey, Ex);
+
+      if (trace)
+      {
+        Rcpp::List info = Rcpp::List::create(
+          Rcpp::Named("iter") = iterations,
+          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update balance",
+          Rcpp::Named("loss") = J(Um, E));
+        info.attr("class") = "wclr.trace.info";
+        log.push_back(info);
       }
 
       // check convergence
