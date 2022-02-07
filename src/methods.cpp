@@ -188,7 +188,7 @@ double J(const arma::mat &U,
 //' @param trace logical value. If \code{TRUE}, produce a trace information of
 //'   the progress of the algorithm.
 //'
-//' @return returns an object of class \code{wclr.clr}.
+//' @return returns an object of class \code{WCLR.clr}.
 //'
 //' @seealso \code{\link{clr.default}} for a user-friendly version of this method.
 //'
@@ -248,7 +248,7 @@ Rcpp::List
             Rcpp::Named("iter") = iterations,
             Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
             Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -270,7 +270,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = "update kpartition",
           Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
     }
@@ -280,14 +280,14 @@ Rcpp::List
     update_centers(centers, arma::pow(U, m), X);
 
     // build Rcpp model
-    log.attr("class") = "wclr.trace";
+    log.attr("class") = "WCLR.trace";
 
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
       Rcpp::Named("converged")  = converged
     );
-    rcpp_lloyd.attr("class") = "wclr.lloyd";
+    rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
@@ -301,7 +301,7 @@ Rcpp::List
       Rcpp::Named("algorithm")     = rcpp_lloyd,
       Rcpp::Named("trace")         = log
     );
-    rcpp_model.attr("class") = "wclr.clr";
+    rcpp_model.attr("class") = "WCLR.clr";
 
     return rcpp_model;
   }
@@ -312,7 +312,7 @@ Rcpp::List
 //'
 //' @inheritParams clr_lloyd_cpp
 //'
-//' @return returns an object of class \code{wclr.kmeans}.
+//' @return returns an object of class \code{WCLR.kmeans}.
 //'
 //' @seealso \code{\link{kmeans.default}} for a user-friendly version of this method.
 //'
@@ -366,7 +366,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -388,7 +388,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = "update kpartition",
           Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
     }
@@ -407,14 +407,14 @@ Rcpp::List
     }
 
     // build Rcpp model
-    log.attr("class") = "wclr.trace";
+    log.attr("class") = "WCLR.trace";
 
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
       Rcpp::Named("converged")  = converged
     );
-    rcpp_lloyd.attr("class") = "wclr.lloyd";
+    rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
@@ -428,7 +428,7 @@ Rcpp::List
       Rcpp::Named("algorithm")     = rcpp_lloyd,
       Rcpp::Named("trace")         = log
     );
-    rcpp_model.attr("class") = "wclr.kmeans";
+    rcpp_model.attr("class") = "WCLR.kmeans";
 
     return rcpp_model;
   }
@@ -440,7 +440,7 @@ Rcpp::List
 //' @inheritParams clr_lloyd_cpp
 //' @param gamma numeric balancing value.
 //'
-//' @return returns an object of class \code{wclr.kplane}.
+//' @return returns an object of class \code{WCLR.kplane}.
 //'
 //' @seealso \code{\link{kplane.default}} for a user-friendly version of this method.
 //'
@@ -515,7 +515,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -527,7 +527,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -549,20 +549,20 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = "update kpartition",
           Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
     }
 
     // build Rcpp model
-    log.attr("class") = "wclr.trace";
+    log.attr("class") = "WCLR.trace";
 
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
       Rcpp::Named("converged")  = converged
     );
-    rcpp_lloyd.attr("class") = "wclr.lloyd";
+    rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
@@ -577,7 +577,7 @@ Rcpp::List
       Rcpp::Named("algorithm")     = rcpp_lloyd,
       Rcpp::Named("trace")         = log
     );
-    rcpp_model.attr("class") = "wclr.kplane";
+    rcpp_model.attr("class") = "WCLR.kplane";
 
     return rcpp_model;
   }
@@ -727,7 +727,7 @@ void update_weights_epg(arma::cube &W,
 //' @param wnorm wnorm type. One of: \code{"epg"}, \code{"epl"},
 //'   \code{"qpg"}, \code{"qpl"}.
 //'
-//' @return returns an object of class \code{wclr.wclr}.
+//' @return returns an object of class \code{WCLR.wclr}.
 //'
 //' @seealso \code{\link{wclr.default}} for a user-friendly version of this method.
 //'
@@ -803,7 +803,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -815,7 +815,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -834,7 +834,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -856,20 +856,20 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = "update kpartition",
           Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
     }
 
     // build Rcpp model
-    log.attr("class") = "wclr.trace";
+    log.attr("class") = "WCLR.trace";
 
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
       Rcpp::Named("converged")  = converged
     );
-    rcpp_lloyd.attr("class") = "wclr.lloyd";
+    rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
@@ -886,7 +886,7 @@ Rcpp::List
       Rcpp::Named("algorithm")     = rcpp_lloyd,
       Rcpp::Named("trace")         = log
     );
-    rcpp_model.attr("class") = "wclr.wclr";
+    rcpp_model.attr("class") = "WCLR.wclr";
 
     return rcpp_model;
   }
@@ -982,7 +982,7 @@ void update_balance_pl(arma::vec &alpha,
 //'   \code{"qpg"}, \code{"qpl"}.
 //' @param balance self-balance type. One of: \code{"pg"}, \code{"pl"}.
 //'
-//' @return returns an object of class \code{wclr.swclr}.
+//' @return returns an object of class \code{WCLR.swclr}.
 //'
 //' @seealso \code{\link{swclr.default}} for a user-friendly version of this method.
 //'
@@ -1060,7 +1060,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -1072,7 +1072,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -1091,7 +1091,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -1106,7 +1106,7 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = (iterations == 0)? "initialization" : "update balance",
           Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
 
@@ -1128,20 +1128,20 @@ Rcpp::List
           Rcpp::Named("iter") = iterations,
           Rcpp::Named("step") = "update kpartition",
           Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "wclr.trace.info";
+        info.attr("class") = "WCLR.trace.info";
         log.push_back(info);
       }
     }
 
     // build Rcpp model
-    log.attr("class") = "wclr.trace";
+    log.attr("class") = "WCLR.trace";
 
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
       Rcpp::Named("converged")  = converged
     );
-    rcpp_lloyd.attr("class") = "wclr.lloyd";
+    rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
@@ -1159,7 +1159,7 @@ Rcpp::List
       Rcpp::Named("algorithm")     = rcpp_lloyd,
       Rcpp::Named("trace")         = log
     );
-    rcpp_model.attr("class") = "wclr.swclr";
+    rcpp_model.attr("class") = "WCLR.swclr";
 
     return rcpp_model;
   }

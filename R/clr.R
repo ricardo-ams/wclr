@@ -33,9 +33,13 @@ clr.default <- function(X, y, K, m = 1.0,
 {
   ## check input ##############################################################
 
-  X <- as.matrix(X)
-  y <- as.numeric(y)
-  stopifnot(nrow(X) == length(y))
+  stopifnot(is.matrix(X))
+  stopifnot(is.numeric(y))
+
+  N <- nrow(X) # number of observations
+  P <- ncol(X) # number of predictors
+
+  stopifnot(N > 0 && P > 0 && N > P && N == length(y))
 
   K <- as.integer(K)
   stopifnot(all(K > 0L) && length(K) == 1)
@@ -54,8 +58,6 @@ clr.default <- function(X, y, K, m = 1.0,
   trace <- as.logical(trace)
 
   ## model fitting ############################################################
-
-  N <- nrow(X)
 
   model <- list(loss = Inf)
 
@@ -77,16 +79,22 @@ clr.default <- function(X, y, K, m = 1.0,
 
   ## output ###################################################################
 
-  model$call                    <- match.call()
-  rownames(model$coefficients)  <- c("(intercept)", colnames(X))
+  if (is.null(colnames(X)))
+    var_names <- paste("X", 1:P, sep = "")
+  else
+    var_names <- colnames(X)
+
+  rownames(model$coefficients) <- c("(Intercept)", var_names)
+  rownames(model$centers)      <- var_names
   colnames(model$coefficients)  <- paste("cluster", 1:model$K, sep = "")
   colnames(model$fitted.values) <- paste("cluster", 1:model$K, sep = "")
   colnames(model$residuals)     <- paste("cluster", 1:model$K, sep = "")
-  rownames(model$centers)       <- colnames(X)
   colnames(model$centers)       <- paste("cluster", 1:model$K, sep = "")
   colnames(model$membership)    <- paste("cluster", 1:model$K, sep = "")
-  model$cluster                 <- max.col(model$membership)
-  class(model)                  <- c(class(model), "wclr")
+
+  model$call <- match.call()
+  model$cluster <- max.col(model$membership)
+  class(model) <- c(class(model), "WCLR")
   model
 }
 
@@ -115,7 +123,7 @@ clr.formula <- function(formula, data, K,
 }
 
 #' @export
-print.wclr.clr <- function(x, ...)
+print.WCLR.clr <- function(x, ...)
 {
   cat("Clusterwise Linear Regression\n\n")
 
@@ -131,4 +139,11 @@ print.wclr.clr <- function(x, ...)
   print(names(x))
 
   invisible(x)
+}
+
+#' @export
+predict.WCLR.clr <- function(object,
+                              newdata, ...)
+{
+  predict.WCLR(object, newdata, ...)
 }

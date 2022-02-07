@@ -22,7 +22,7 @@ a fuzzy k-partition when \code{m > 1.0}.}
 the progress of the algorithm.}
 }
 \value{
-returns an object of class \code{wclr.kmeans}.
+returns an object of class \code{WCLR.kmeans}.
 }
 \description{
 This is a bare-bones function and must NOT be used by an end-user.

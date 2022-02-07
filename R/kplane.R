@@ -25,9 +25,13 @@ kplane.default <- function(X, y, K, gamma,
 {
   ## check input ##############################################################
 
-  X <- as.matrix(X)
-  y <- as.numeric(y)
-  stopifnot(nrow(X) == length(y))
+  stopifnot(is.matrix(X))
+  stopifnot(is.numeric(y))
+
+  N <- nrow(X) # number of observations
+  P <- ncol(X) # number of predictors
+
+  stopifnot(N > 0 && P > 0 && N > P && N == length(y))
 
   K <- as.integer(K)
   stopifnot(all(K > 0L) && length(K) == 1)
@@ -50,8 +54,6 @@ kplane.default <- function(X, y, K, gamma,
 
   ## model fitting ############################################################
 
-  N <- nrow(X)
-
   model <- list(loss = Inf)
 
   if (algorithm == "Lloyd")
@@ -72,16 +74,22 @@ kplane.default <- function(X, y, K, gamma,
 
   ## output ###################################################################
 
-  model$call                    <- match.call()
-  rownames(model$coefficients)  <- c("(intercept)", colnames(X))
+  if (is.null(colnames(X)))
+    var_names <- paste("X", 1:P, sep = "")
+  else
+    var_names <- colnames(X)
+
+  rownames(model$coefficients) <- c("(Intercept)", var_names)
+  rownames(model$centers)      <- var_names
   colnames(model$coefficients)  <- paste("cluster", 1:model$K, sep = "")
   colnames(model$fitted.values) <- paste("cluster", 1:model$K, sep = "")
   colnames(model$residuals)     <- paste("cluster", 1:model$K, sep = "")
-  rownames(model$centers)       <- colnames(X)
   colnames(model$centers)       <- paste("cluster", 1:model$K, sep = "")
   colnames(model$membership)    <- paste("cluster", 1:model$K, sep = "")
-  model$cluster                 <- max.col(model$membership)
-  class(model)                  <- c(class(model), "wclr")
+
+  model$call <- match.call()
+  model$cluster <- max.col(model$membership)
+  class(model) <- c(class(model), "WCLR")
   model
 }
 
@@ -110,7 +118,7 @@ kplane.formula <- function(formula, data, K, gamma,
 }
 
 #' @export
-print.wclr.kplane <- function(x, ...)
+print.WCLR.kplane <- function(x, ...)
 {
   cat("K-plane Regression\n\n")
 
@@ -126,4 +134,11 @@ print.wclr.kplane <- function(x, ...)
   print(names(x))
 
   invisible(x)
+}
+
+#' @export
+predict.WCLR.kplane <- function(object,
+                                newdata, ...)
+{
+  predict.WCLR(object, newdata, ...)
 }

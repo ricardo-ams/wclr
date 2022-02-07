@@ -14,7 +14,7 @@
 #' @param trace logical value. If \code{TRUE}, produce a trace information of
 #'   the progress of the algorithm.
 #'
-#' @return returns an object of class \code{wclr.clr}.
+#' @return returns an object of class \code{WCLR.clr}.
 #'
 #' @seealso \code{\link{clr.default}} for a user-friendly version of this method.
 #'
@@ -29,7 +29,7 @@ clr_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #'
 #' @inheritParams clr_lloyd_cpp
 #'
-#' @return returns an object of class \code{wclr.kmeans}.
+#' @return returns an object of class \code{WCLR.kmeans}.
 #'
 #' @seealso \code{\link{kmeans.default}} for a user-friendly version of this method.
 #'
@@ -45,7 +45,7 @@ kmeans_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #' @inheritParams clr_lloyd_cpp
 #' @param gamma numeric balancing value.
 #'
-#' @return returns an object of class \code{wclr.kplane}.
+#' @return returns an object of class \code{WCLR.kplane}.
 #'
 #' @seealso \code{\link{kplane.default}} for a user-friendly version of this method.
 #'
@@ -63,7 +63,7 @@ kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax, trace) {
 #' @param wnorm wnorm type. One of: \code{"epg"}, \code{"epl"},
 #'   \code{"qpg"}, \code{"qpl"}.
 #'
-#' @return returns an object of class \code{wclr.wclr}.
+#' @return returns an object of class \code{WCLR.wclr}.
 #'
 #' @seealso \code{\link{wclr.default}} for a user-friendly version of this method.
 #'
@@ -81,7 +81,7 @@ wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax, trace) {
 #'   \code{"qpg"}, \code{"qpl"}.
 #' @param balance self-balance type. One of: \code{"pg"}, \code{"pl"}.
 #'
-#' @return returns an object of class \code{wclr.swclr}.
+#' @return returns an object of class \code{WCLR.swclr}.
 #'
 #' @seealso \code{\link{swclr.default}} for a user-friendly version of this method.
 #'

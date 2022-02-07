@@ -27,9 +27,13 @@ wclr.default <- function(X, y, K, alpha, wnorm,
 {
   ## check input ##############################################################
 
-  X <- as.matrix(X)
-  y <- as.numeric(y)
-  stopifnot(nrow(X) == length(y))
+  stopifnot(is.matrix(X))
+  stopifnot(is.numeric(y))
+
+  N <- nrow(X) # number of observations
+  P <- ncol(X) # number of predictors
+
+  stopifnot(N > 0 && P > 0 && N > P && N == length(y))
 
   K <- as.integer(K)
   stopifnot(all(K > 0L) && length(K) == 1)
@@ -54,8 +58,6 @@ wclr.default <- function(X, y, K, alpha, wnorm,
 
   ## model fitting ############################################################
 
-  N <- nrow(X)
-
   model <- list(loss = Inf)
 
   if (algorithm == "Lloyd")
@@ -76,18 +78,24 @@ wclr.default <- function(X, y, K, alpha, wnorm,
 
   ## output ###################################################################
 
-  model$call                    <- match.call()
-  rownames(model$coefficients)  <- c("(intercept)", colnames(X))
+  if (is.null(colnames(X)))
+    var_names <- paste("X", 1:P, sep = "")
+  else
+    var_names <- colnames(X)
+
+  rownames(model$coefficients) <- c("(Intercept)", var_names)
+  rownames(model$centers)      <- var_names
+  dimnames(model$weights)      <- list(var_names, var_names,
+                                       paste("cluster", 1:model$K, sep = ""))
   colnames(model$coefficients)  <- paste("cluster", 1:model$K, sep = "")
   colnames(model$fitted.values) <- paste("cluster", 1:model$K, sep = "")
   colnames(model$residuals)     <- paste("cluster", 1:model$K, sep = "")
-  rownames(model$centers)       <- colnames(X)
   colnames(model$centers)       <- paste("cluster", 1:model$K, sep = "")
-  dimnames(model$weights)       <- list(colnames(X), colnames(X),
-                                        paste("cluster", 1:model$K, sep = ""))
   colnames(model$membership)    <- paste("cluster", 1:model$K, sep = "")
-  model$cluster                 <- max.col(model$membership)
-  class(model)                  <- c(class(model), "wclr")
+
+  model$call <- match.call()
+  model$cluster <- max.col(model$membership)
+  class(model) <- c(class(model), "WCLR")
   model
 }
 
@@ -116,7 +124,7 @@ wclr.formula <- function(formula, data, K, alpha, wnorm,
 }
 
 #' @export
-print.wclr.wclr <- function(x, ...)
+print.WCLR.wclr <- function(x, ...)
 {
   cat("Weighted Clusterwise Linear Regression\n\n")
 
@@ -141,7 +149,7 @@ print.wclr.wclr <- function(x, ...)
 #'
 #' Predicted values based on \code{\link{swclr.default}} model object.
 #'
-#' @param object object of class inheriting from "wclr.wclr".
+#' @param object object of class inheriting from "WCLR.wclr".
 #' @param newdata a data matrix in which to look for variables with
 #' which to predict.
 #' @param ... not used.
@@ -149,7 +157,7 @@ print.wclr.wclr <- function(x, ...)
 #' @return produces a vector of predictions.
 #'
 #' @export
-predict.wclr.wclr <- function(object,
+predict.WCLR.wclr <- function(object,
                               newdata, ...)
 {
   if (!is.null(object$formula))
