@@ -7,8 +7,7 @@ using namespace arma;
 void update_coefficients(arma::mat &R,
                          const arma::mat &U,
                          const arma::mat &X,
-                         const arma::colvec &y,
-                         Rcpp::List &log)
+                         const arma::colvec &y)
 {
   const int K = U.n_cols;
 
@@ -17,22 +16,13 @@ void update_coefficients(arma::mat &R,
     try
     {
       arma::mat W = arma::diagmat(U.col(k));
-      R.col(k) = arma::solve(X.t() * W * X, X.t() * W * y);
+
+      arma::colvec coefs = arma::solve(X.t() * W * X, X.t() * W * y);
+
+      if (coefs.is_finite())
+        R.col(k) = coefs;
     }
-    catch (const std::exception &ex)
-    {
-      Rcpp::List error = Rcpp::List::create(
-        Rcpp::Named("error") = ex.what());
-      error.attr("class") = "wclr.trace.error";
-      log.push_back(error);
-    }
-    catch (...)
-    {
-      Rcpp::List error = Rcpp::List::create(
-        Rcpp::Named("error") = "unknown exception");
-      error.attr("class") = "wclr.trace.error";
-      log.push_back(error);
-    }
+    catch (...) {}
   }
 }
 
@@ -42,8 +32,8 @@ void update_centers(arma::mat &C,
 {
   const int N = U.n_rows;
   const int K = U.n_cols;
+  const int P = X.n_cols;
 
-  C.zeros();
   for (int k = 0; k < K; k++)
   {
     // Compute the weighted arithmetic mean M of a data set using the
@@ -53,18 +43,27 @@ void update_centers(arma::mat &C,
     // Reference:
     //   GNU GSL 2.6 source code - https://www.gnu.org/software/gsl/doc/html/statistics.html?highlight=weighted%20mean#c.gsl_stats_wmean
 
-    double W = 0.0;
-
-    for (int n = 0; n < N; n++)
+    try
     {
-      const double unk = U(n, k);
+      arma::colvec centroid(P, arma::fill::zeros);
 
-      if (unk > 0.0)
+      double W = 0.0;
+
+      for (int n = 0; n < N; n++)
       {
-        W += unk;
-        C.col(k) += (X.row(n).t() - C.col(k)) * (unk / W);
+        const double unk = U(n, k);
+
+        if (unk > 0.0)
+        {
+          W += unk;
+          centroid += (X.row(n).t() - C.col(k)) * (unk / W);
+        }
       }
+
+      if (centroid.is_finite())
+        C.col(k) = centroid;
     }
+    catch (...) {}
   }
 }
 
@@ -81,20 +80,29 @@ bool update_membership(arma::mat &U,
 
   for (int n = 0; n < N; n++)
   {
-    for (int k = 0; k < K; k++)
+    try
     {
-      double unk = 0.0;
+      arma::vec membership(K, arma::fill::zeros);
 
-      for (int h = 0; h < K; h++)
-        unk += std::pow(diss(n, k) / diss(n, h), exp);
+      for (int k = 0; k < K; k++)
+      {
+        double unk = 0.0;
 
-      unk = 1.0 / unk;
+        for (int h = 0; h < K; h++)
+          unk += std::pow(diss(n, k) / diss(n, h), exp);
 
-      if (std::fabs(U(n, k) - unk) > 0.01)
-        converged = false;
+        unk = 1.0 / unk;
 
-      U(n, k) = unk;
+        if (std::fabs(U(n, k) - unk) > 0.01)
+          converged = false;
+
+        membership(k) = unk;
+      }
+
+      if (membership.is_finite())
+        U.row(n) = membership;
     }
+    catch (...) {}
   }
 
   return converged;
@@ -129,11 +137,9 @@ bool update_membership(arma::mat &U,
     if (U(n, min_k) !=  1.0 - ((K - 1) * EPS))
     {
       converged = false;
-
-      for (int k = 0; k < K; k++)
-        // a negligible but non-zero membership value
-        U(n, k) = EPS;
-
+      // a negligible but non-zero membership value
+      U.row(n).fill(EPS);
+      // update membership
       U(n, min_k) = 1.0 - ((K - 1) * EPS);
     }
   }
@@ -216,7 +222,7 @@ Rcpp::List
       // update parameters
       arma::mat Um = arma::pow(U, m);
 
-      update_coefficients(coefficients, Um, X1, y, log);
+      update_coefficients(coefficients, Um, X1, y);
 
       for (int k = 0; k < K; k++)
       {
@@ -380,7 +386,7 @@ Rcpp::List
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
 
-    update_coefficients(coefficients, arma::pow(U, m), X1, y, log);
+    update_coefficients(coefficients, arma::pow(U, m), X1, y);
 
     for (int k = 0; k < K; k++)
     {
@@ -483,7 +489,7 @@ Rcpp::List
       // update parameters
       arma::mat Um = arma::pow(U, m);
 
-      update_coefficients(coefficients, Um, X1, y, log);
+      update_coefficients(coefficients, Um, X1, y);
 
       for (int k = 0; k < K; k++)
       {
@@ -574,21 +580,24 @@ void update_weights_qpl(arma::cube &W,
   const int K = U.n_cols;
   const int P = C.n_rows;
 
-  arma::mat Q(P, P, arma::fill::zeros);
-
   for (int k = 0; k < K; k++)
   {
-    Q.zeros();
-
-    for (int n = 0; n < N; n++)
+    try
     {
-      const double unk = U(n, k);
+      arma::mat Q(P, P, arma::fill::zeros);
 
-      arma::colvec XC = X.row(n).t() - C.col(k);
-      Q += unk * (XC * XC.t());
+      for (int n = 0; n < N; n++)
+      {
+        arma::colvec XC = X.row(n).t() - C.col(k);
+        Q += U(n, k) * (XC * XC.t());
+      }
+
+      arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+
+      if (weights.is_finite())
+        W.slice(k) = weights;
     }
-
-    W.slice(k) = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+    catch (...) {}
   }
 }
 
@@ -601,23 +610,25 @@ void update_weights_qpg(arma::cube &W,
   const int K = U.n_cols;
   const int P = C.n_rows;
 
-  arma::mat Q(P, P, arma::fill::zeros);
+  try {
+    arma::mat Q(P, P, arma::fill::zeros);
 
-  for (int k = 0; k < K; k++)
-  {
-    for (int n = 0; n < N; n++)
+    for (int k = 0; k < K; k++)
     {
-      const double unk = U(n, k);
-
-      arma::colvec XC = X.row(n).t() - C.col(k);
-      Q += unk * (XC * XC.t());
+      for (int n = 0; n < N; n++)
+      {
+        arma::colvec XC = X.row(n).t() - C.col(k);
+        Q += U(n, k) * (XC * XC.t());
+      }
     }
+
+    const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+
+    if (weights.is_finite())
+      for (int k = 0; k < K; k++)
+        W.slice(k) = weights;
   }
-
-  const arma::mat w = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
-
-  for (int k = 0; k < K; k++)
-    W.slice(k) = w;
+  catch (...) {}
 }
 
 void update_weights_epl(arma::cube &W,
@@ -629,23 +640,24 @@ void update_weights_epl(arma::cube &W,
   const int K = U.n_cols;
   const int P = C.n_rows;
 
-  arma::colvec aux(P, arma::fill::zeros);
-
   for (int k = 0; k < K; k++)
   {
-    aux.zeros();
-
-    for (int n = 0; n < N; n++)
+    try
     {
-      const double unk = U(n, k);
+      arma::colvec aux(P, arma::fill::zeros);
 
-      arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
-      aux += unk * t;
+      for (int n = 0; n < N; n++)
+      {
+        arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
+        aux += U(n, k) * t;
+      }
+
+      const arma::colvec weights = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+
+      if (weights.is_finite())
+        W.slice(k) = arma::diagmat(weights);
     }
-
-    const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
-
-    W.slice(k) = arma::diagmat(w);
+    catch (...) {}
   }
 }
 
@@ -658,23 +670,28 @@ void update_weights_epg(arma::cube &W,
   const int K = U.n_cols;
   const int P = C.n_rows;
 
-  arma::colvec aux(P, arma::fill::zeros);
-
-  for (int k = 0; k < K; k++)
+  try
   {
-    for (int n = 0; n < N; n++)
+    arma::colvec aux(P, arma::fill::zeros);
+
+    for (int k = 0; k < K; k++)
     {
-      const double unk = U(n, k);
+      for (int n = 0; n < N; n++)
+      {
+        const double unk = U(n, k);
 
-      arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
-      aux += unk * t;
+        arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
+        aux += unk * t;
+      }
     }
+
+    const arma::colvec weights = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+
+    if (weights.is_finite())
+      for (int k = 0; k < K; k++)
+        W.slice(k) = arma::diagmat(weights);
   }
-
-  const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
-
-  for (int k = 0; k < K; k++)
-    W.slice(k) = arma::diagmat(w);
+  catch (...) {}
 }
 
 //' Weighted Clusterwise Linear Regression
@@ -748,7 +765,7 @@ Rcpp::List
       // update parameters
       arma::mat Um = arma::pow(U, m);
 
-      update_coefficients(coefficients, Um, X1, y, log);
+      update_coefficients(coefficients, Um, X1, y);
 
       for (int k = 0; k < K; k++)
       {
@@ -979,7 +996,7 @@ Rcpp::List
       // update parameters
       arma::mat Um = arma::pow(U, m);
 
-      update_coefficients(coefficients, Um, X1, y, log);
+      update_coefficients(coefficients, Um, X1, y);
 
       for (int k = 0; k < K; k++)
       {
