@@ -93,6 +93,30 @@ swclr.default <- function(X, y, K, balance, wnorm,
 }
 
 #' @export
+swclr.formula <- function(formula, data, K, balance, wnorm,
+                          m = 1.0,
+                          nstart = 1L,
+                          iter.max = 100L,
+                          algorithm = c("Lloyd"),
+                          trace = FALSE, ...)
+{
+  dataset <- model.frame(formula = formula, data = data)
+  X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  y <- as.vector(dataset[, 1])
+
+  model <- swclr.default(X, y, K, balance, wnorm,
+                         m = m,
+                         nstart = nstart,
+                         iter.max = iter.max,
+                         algorithm = algorithm,
+                         trace = trace, ...)
+
+  model$call <- match.call()
+  model$formula <- formula
+  model
+}
+
+#' @export
 print.wclr.swclr <- function(x, ...)
 {
   cat("Self-balanced Weighted Clusterwise Linear Regression\n\n")
@@ -135,7 +159,15 @@ print.wclr.swclr <- function(x, ...)
 predict.wclr.swclr <- function(object,
                                newdata, ...)
 {
-  X <- as.matrix(newdata)
+  if (!is.null(object$formula))
+  {
+    dataset <- model.frame(formula = object$formula, data = newdata)
+    X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  }
+  else
+  {
+    X <- as.matrix(newdata)
+  }
 
   N <- nrow(X)
   K <- object$K

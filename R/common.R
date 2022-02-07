@@ -77,7 +77,15 @@ print.wclr.trace <- function(x, ...)
 predict.wclr <- function(object,
                          newdata, ...)
 {
-  X <- as.matrix(newdata)
+  if (!is.null(object$formula))
+  {
+    dataset <- model.frame(formula = object$formula, data = newdata)
+    X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  }
+  else
+  {
+    X <- as.matrix(newdata)
+  }
 
   N <- nrow(X)
   K <- object$K

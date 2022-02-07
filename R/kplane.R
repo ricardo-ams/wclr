@@ -86,6 +86,30 @@ kplane.default <- function(X, y, K, gamma,
 }
 
 #' @export
+kplane.formula <- function(formula, data, K, gamma,
+                           m = 1.0,
+                           nstart = 1L,
+                           iter.max = 100L,
+                           algorithm = c("Lloyd"),
+                           trace = FALSE, ...)
+{
+  dataset <- model.frame(formula = formula, data = data)
+  X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  y <- as.vector(dataset[, 1])
+
+  model <- kplane.default(X, y, K, gamma,
+                          m = m,
+                          nstart = nstart,
+                          iter.max = iter.max,
+                          algorithm = algorithm,
+                          trace = trace, ...)
+
+  model$call <- match.call()
+  model$formula <- formula
+  model
+}
+
+#' @export
 print.wclr.kplane <- function(x, ...)
 {
   cat("K-plane Regression\n\n")

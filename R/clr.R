@@ -91,6 +91,30 @@ clr.default <- function(X, y, K, m = 1.0,
 }
 
 #' @export
+clr.formula <- function(formula, data, K,
+                        m = 1.0,
+                        nstart = 1L,
+                        iter.max = 100L,
+                        algorithm = c("Lloyd"),
+                        trace = FALSE, ...)
+{
+  dataset <- model.frame(formula = formula, data = data)
+  X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  y <- as.vector(dataset[, 1])
+
+  model <- clr.default(X, y, K,
+                       m = m,
+                       nstart = nstart,
+                       iter.max = iter.max,
+                       algorithm = algorithm,
+                       trace = trace, ...)
+
+  model$call <- match.call()
+  model$formula <- formula
+  model
+}
+
+#' @export
 print.wclr.clr <- function(x, ...)
 {
   cat("Clusterwise Linear Regression\n\n")

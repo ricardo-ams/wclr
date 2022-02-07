@@ -5,6 +5,7 @@
 #' @import RcppArmadillo
 #' @importFrom Rcpp evalCpp sourceCpp
 #' @importFrom stats runif mahalanobis
-#' @useDynLib wclr
+#' @importFrom stats model.frame
+#' @useDynLib WCLR
 ## usethis namespace: end
 NULL

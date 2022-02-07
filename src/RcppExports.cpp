@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // clr_lloyd_cpp
 Rcpp::List clr_lloyd_cpp(arma::mat& U, const arma::mat& X, const arma::colvec& y, const double m, const int itermax, const bool trace);
-RcppExport SEXP _wclr_clr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
+RcppExport SEXP _WCLR_clr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,7 +29,7 @@ END_RCPP
 }
 // kmeans_lloyd_cpp
 Rcpp::List kmeans_lloyd_cpp(arma::mat& U, const arma::mat& X, const arma::colvec& y, const double m, const int itermax, const bool trace);
-RcppExport SEXP _wclr_kmeans_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
+RcppExport SEXP _WCLR_kmeans_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,7 +45,7 @@ END_RCPP
 }
 // kplane_lloyd_cpp
 Rcpp::List kplane_lloyd_cpp(arma::mat& U, const arma::mat& X, const arma::colvec& y, const double gamma, const double m, const int itermax, const bool trace);
-RcppExport SEXP _wclr_kplane_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP gammaSEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
+RcppExport SEXP _WCLR_kplane_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP gammaSEXP, SEXP mSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -62,7 +62,7 @@ END_RCPP
 }
 // wclr_lloyd_cpp
 Rcpp::List wclr_lloyd_cpp(arma::mat& U, const arma::mat& X, const arma::colvec& y, const double alpha, const double m, const std::string wnorm, const int itermax, const bool trace);
-RcppExport SEXP _wclr_wclr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP alphaSEXP, SEXP mSEXP, SEXP wnormSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
+RcppExport SEXP _WCLR_wclr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP alphaSEXP, SEXP mSEXP, SEXP wnormSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -80,7 +80,7 @@ END_RCPP
 }
 // swclr_lloyd_cpp
 Rcpp::List swclr_lloyd_cpp(arma::mat& U, const arma::mat& X, const arma::colvec& y, const double m, const std::string wnorm, const std::string balance, const int itermax, const bool trace);
-RcppExport SEXP _wclr_swclr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP wnormSEXP, SEXP balanceSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
+RcppExport SEXP _WCLR_swclr_lloyd_cpp(SEXP USEXP, SEXP XSEXP, SEXP ySEXP, SEXP mSEXP, SEXP wnormSEXP, SEXP balanceSEXP, SEXP itermaxSEXP, SEXP traceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,15 +98,15 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_wclr_clr_lloyd_cpp", (DL_FUNC) &_wclr_clr_lloyd_cpp, 6},
-    {"_wclr_kmeans_lloyd_cpp", (DL_FUNC) &_wclr_kmeans_lloyd_cpp, 6},
-    {"_wclr_kplane_lloyd_cpp", (DL_FUNC) &_wclr_kplane_lloyd_cpp, 7},
-    {"_wclr_wclr_lloyd_cpp", (DL_FUNC) &_wclr_wclr_lloyd_cpp, 8},
-    {"_wclr_swclr_lloyd_cpp", (DL_FUNC) &_wclr_swclr_lloyd_cpp, 8},
+    {"_WCLR_clr_lloyd_cpp", (DL_FUNC) &_WCLR_clr_lloyd_cpp, 6},
+    {"_WCLR_kmeans_lloyd_cpp", (DL_FUNC) &_WCLR_kmeans_lloyd_cpp, 6},
+    {"_WCLR_kplane_lloyd_cpp", (DL_FUNC) &_WCLR_kplane_lloyd_cpp, 7},
+    {"_WCLR_wclr_lloyd_cpp", (DL_FUNC) &_WCLR_wclr_lloyd_cpp, 8},
+    {"_WCLR_swclr_lloyd_cpp", (DL_FUNC) &_WCLR_swclr_lloyd_cpp, 8},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_wclr(DllInfo *dll) {
+RcppExport void R_init_WCLR(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

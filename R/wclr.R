@@ -92,6 +92,30 @@ wclr.default <- function(X, y, K, alpha, wnorm,
 }
 
 #' @export
+wclr.formula <- function(formula, data, K, alpha, wnorm,
+                         m = 1.0,
+                         nstart = 1L,
+                         iter.max = 100L,
+                         algorithm = c("Lloyd"),
+                         trace = FALSE, ...)
+{
+  dataset <- model.frame(formula = formula, data = data)
+  X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  y <- as.vector(dataset[, 1])
+
+  model <- wclr.default(X, y, K, alpha, wnorm,
+                        m = m,
+                        nstart = nstart,
+                        iter.max = iter.max,
+                        algorithm = algorithm,
+                        trace = trace, ...)
+
+  model$call <- match.call()
+  model$formula <- formula
+  model
+}
+
+#' @export
 print.wclr.wclr <- function(x, ...)
 {
   cat("Weighted Clusterwise Linear Regression\n\n")
@@ -128,7 +152,15 @@ print.wclr.wclr <- function(x, ...)
 predict.wclr.wclr <- function(object,
                               newdata, ...)
 {
-  X <- as.matrix(newdata)
+  if (!is.null(object$formula))
+  {
+    dataset <- model.frame(formula = object$formula, data = newdata)
+    X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
+  }
+  else
+  {
+    X <- as.matrix(newdata)
+  }
 
   N <- nrow(X)
   K <- object$K

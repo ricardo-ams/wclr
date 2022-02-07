@@ -20,7 +20,7 @@
 #'
 #' @export
 clr_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
-    .Call('_wclr_clr_lloyd_cpp', PACKAGE = 'wclr', U, X, y, m, itermax, trace)
+    .Call('_WCLR_clr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax, trace)
 }
 
 #' K-means Linear Regression
@@ -35,7 +35,7 @@ clr_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #'
 #' @export
 kmeans_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
-    .Call('_wclr_kmeans_lloyd_cpp', PACKAGE = 'wclr', U, X, y, m, itermax, trace)
+    .Call('_WCLR_kmeans_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax, trace)
 }
 
 #' K-plane Regression
@@ -51,7 +51,7 @@ kmeans_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #'
 #' @export
 kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax, trace) {
-    .Call('_wclr_kplane_lloyd_cpp', PACKAGE = 'wclr', U, X, y, gamma, m, itermax, trace)
+    .Call('_WCLR_kplane_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, gamma, m, itermax, trace)
 }
 
 #' Weighted Clusterwise Linear Regression
@@ -69,7 +69,7 @@ kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax, trace) {
 #'
 #' @export
 wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax, trace) {
-    .Call('_wclr_wclr_lloyd_cpp', PACKAGE = 'wclr', U, X, y, alpha, m, wnorm, itermax, trace)
+    .Call('_WCLR_wclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, alpha, m, wnorm, itermax, trace)
 }
 
 #' Self-balanced Weighted Clusterwise Linear Regression
@@ -87,6 +87,6 @@ wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax, trace) {
 #'
 #' @export
 swclr_lloyd_cpp <- function(U, X, y, m, wnorm, balance, itermax, trace) {
-    .Call('_wclr_swclr_lloyd_cpp', PACKAGE = 'wclr', U, X, y, m, wnorm, balance, itermax, trace)
+    .Call('_WCLR_swclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, wnorm, balance, itermax, trace)
 }
 
