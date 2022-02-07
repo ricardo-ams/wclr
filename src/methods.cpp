@@ -1,3 +1,6 @@
+// print only critical warnings about arguments and/or data which are likely
+// to lead to incorrect results.
+#define ARMA_WARN_LEVEL 1
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 
