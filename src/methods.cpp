@@ -22,7 +22,10 @@ void update_coefficients(arma::mat &R,
       if (coefs.is_finite())
         R.col(k) = coefs;
     }
-    catch (...) {}
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating coefficients 'update_coefficients'" << std::endl;
+    }
   }
 }
 
@@ -63,7 +66,10 @@ void update_centers(arma::mat &C,
       if (centroid.is_finite())
         C.col(k) = centroid;
     }
-    catch (...) {}
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating centers 'update_centers'" << std::endl;
+    }
   }
 }
 
@@ -82,7 +88,7 @@ bool update_membership(arma::mat &U,
   {
     try
     {
-      arma::vec membership(K, arma::fill::zeros);
+      arma::rowvec membership(K, arma::fill::zeros);
 
       for (int k = 0; k < K; k++)
       {
@@ -102,7 +108,10 @@ bool update_membership(arma::mat &U,
       if (membership.is_finite())
         U.row(n) = membership;
     }
-    catch (...) {}
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating membership 'update_membership'" << std::endl;
+    }
   }
 
   return converged;
@@ -597,7 +606,10 @@ void update_weights_qpl(arma::cube &W,
       if (weights.is_finite())
         W.slice(k) = weights;
     }
-    catch (...) {}
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating weights 'update_weights_qpl'" << std::endl;
+    }
   }
 }
 
@@ -628,7 +640,10 @@ void update_weights_qpg(arma::cube &W,
       for (int k = 0; k < K; k++)
         W.slice(k) = weights;
   }
-  catch (...) {}
+  catch (...)
+  {
+    Rcpp::Rcerr << "error while updating weights 'update_weights_qpg'" << std::endl;
+  }
 }
 
 void update_weights_epl(arma::cube &W,
@@ -657,7 +672,10 @@ void update_weights_epl(arma::cube &W,
       if (weights.is_finite())
         W.slice(k) = arma::diagmat(weights);
     }
-    catch (...) {}
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating weights 'update_weights_epl'" << std::endl;
+    }
   }
 }
 
@@ -691,7 +709,10 @@ void update_weights_epg(arma::cube &W,
       for (int k = 0; k < K; k++)
         W.slice(k) = arma::diagmat(weights);
   }
-  catch (...) {}
+  catch (...)
+  {
+    Rcpp::Rcerr << "error while updating weights 'update_weights_epg'" << std::endl;
+  }
 }
 
 //' Weighted Clusterwise Linear Regression
@@ -877,22 +898,35 @@ void update_balance_pg(arma::vec &alpha,
   const int N = U.n_rows;
   const int K = U.n_cols;
 
-  double dx = 0.0;
-  double dy = 0.0;
-
-  for (int k = 0; k < K; k++)
+  try
   {
-    for (int n = 0; n < N; n++)
-    {
-      const double unk = U(n, k);
+    double dx = 0.0;
+    double dy = 0.0;
 
-      dy += unk * Ey(n, k);
-      dx += unk * Ex(n, k);
+    for (int k = 0; k < K; k++)
+    {
+      for (int n = 0; n < N; n++)
+      {
+        const double unk = U(n, k);
+
+        dy += unk * Ey(n, k);
+        dx += unk * Ex(n, k);
+      }
+    }
+
+    double a = std::sqrt(dy / dx);
+    double g = std::sqrt(dx / dy);
+
+    if (std::isfinite(a) && std::isfinite(g))
+    {
+      alpha.fill(a);
+      gamma.fill(g);
     }
   }
-
-  alpha.fill(std::sqrt(dy / dx));
-  gamma.fill(std::sqrt(dx / dy));
+  catch (...)
+  {
+    Rcpp::Rcerr << "error while updating balancing 'update_balance_pg'" << std::endl;
+  }
 }
 
 template <typename F1, typename F2>
@@ -907,19 +941,32 @@ void update_balance_pl(arma::vec &alpha,
 
   for (int k = 0; k < K; k++)
   {
-    double dx = 0.0;
-    double dy = 0.0;
-
-    for (int n = 0; n < N; n++)
+    try
     {
-      const double unk = U(n, k);
+      double dx = 0.0;
+      double dy = 0.0;
 
-      dy += unk * Ey(n, k);
-      dx += unk * Ex(n, k);
+      for (int n = 0; n < N; n++)
+      {
+        const double unk = U(n, k);
+
+        dy += unk * Ey(n, k);
+        dx += unk * Ex(n, k);
+      }
+
+      double a = std::sqrt(dy / dx);
+      double g = std::sqrt(dx / dy);
+
+      if (std::isfinite(a) && std::isfinite(g))
+      {
+        alpha(k) = a;
+        gamma(k) = g;
+      }
     }
-
-    alpha(k) = std::sqrt(dy / dx);
-    gamma(k) = std::sqrt(dx / dy);
+    catch (...)
+    {
+      Rcpp::Rcerr << "error while updating balancing 'update_balance_pl'" << std::endl;
+    }
   }
 }
 
