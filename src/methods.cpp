@@ -126,7 +126,6 @@ bool update_membership(arma::mat &U,
 {
   const int N = U.n_rows;
   const int K = U.n_cols;
-  const double EPS = std::numeric_limits<double>::epsilon();
 
   bool converged = true;
 
@@ -146,13 +145,11 @@ bool update_membership(arma::mat &U,
       }
     }
 
-    if (U(n, min_k) !=  1.0 - ((K - 1) * EPS))
+    if (U(n, min_k) !=  1.0)
     {
       converged = false;
-      // a negligible but non-zero membership value
-      U.row(n).fill(EPS);
-      // update membership
-      U(n, min_k) = 1.0 - ((K - 1) * EPS);
+      U.row(n).zeros();
+      U(n, min_k) = 1.0;
     }
   }
 
@@ -1183,4 +1180,120 @@ Rcpp::List
     rcpp_model.attr("class") = "WCLR.swclr";
 
     return rcpp_model;
+  }
+
+//' Predict
+//'
+//' Predict values by nearest Euclidean distance.
+//'
+//' @param X newdata matrix
+//' @param C centers matrix
+//' @param R coefficients matrix
+//' @param m fuzzier exponent
+//'
+//' @return a vector of predictions.
+//'
+//' @export
+// [[Rcpp::export]]
+arma::vec
+  predict_euclidean_cpp(const arma::mat &X,
+                        const arma::mat &C,
+                        const arma::mat &R,
+                        const double m)
+  {
+    const int N = X.n_rows;
+    const int P = X.n_cols;
+    const int K = C.n_cols;
+
+    auto dist = [&](int n, int k)
+    {
+      // squared Euclidean distance
+      return dot(X.row(n).t() - C.col(k),
+                 X.row(n).t() - C.col(k));
+    };
+
+    arma::mat U(N, K, arma::fill::zeros);
+
+    if (m == 1.0)
+    {
+      update_membership(U, dist);
+    }
+    else
+    {
+      update_membership(U, m, dist);
+    }
+
+    arma::vec predicted_values(N, arma::fill::zeros);
+
+    for (int n = 0; n < N; n++)
+    {
+      predicted_values(n) = 0.0;
+
+      for (int k = 0; k < K; k++)
+      {
+        predicted_values(n) += U(n, k) *
+          (R.col(k)(0) + dot(X.row(n), R.col(k).tail(P)));
+      }
+    }
+
+    return predicted_values;
+  }
+
+//' Predict
+//'
+//' Predict values by nearest quadratic distance.
+//'
+//' @param X newdata matrix
+//' @param C centers matrix
+//' @param W weights cube
+//' @param R coefficients matrix
+//' @param m fuzzier exponent
+//'
+//' @return a vector of predictions.
+//'
+//' @export
+// [[Rcpp::export]]
+arma::vec
+  predict_quadratic_cpp(const arma::mat  &X,
+                        const arma::mat  &C,
+                        const arma::cube &W,
+                        const arma::mat  &R,
+                        const double m)
+  {
+    const int N = X.n_rows;
+    const int P = X.n_cols;
+    const int K = C.n_cols;
+
+    auto dist = [&](int n, int k)
+    {
+      // quadratic dissimilarity
+      arma::colvec xc = X.row(n).t() - C.col(k);
+      return arma::as_scalar(xc.t() * W.slice(k) * xc);
+    };
+
+    arma::mat U(N, K, arma::fill::zeros);
+
+    if (m == 1.0)
+    {
+      update_membership(U, dist);
+    }
+    else
+    {
+      update_membership(U, m, dist);
+    }
+
+    arma::vec predicted_values(N, arma::fill::zeros);
+
+    for (int n = 0; n < N; n++)
+    {
+      predicted_values(n) = 0.0;
+
+      for (int k = 0; k < K; k++)
+      {
+        predicted_values(n) += U(n, k) *
+          (R.col(k)(0) + dot(X.row(n), R.col(k).tail(P)));
+      }
+    }
+
+    return predicted_values;
   }

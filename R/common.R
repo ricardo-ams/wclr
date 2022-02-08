@@ -34,10 +34,10 @@ hard_kpartition <- function(N, K)
 {
   cluster <- sample(rep(1:K, (N / K) + 1)[1:N])
 
-  U <- matrix(rep(.Machine$double.eps, N * K), nrow = N, ncol = K)
+  U <- matrix(rep(0.0, N * K), nrow = N, ncol = K)
 
   for (n in 1:N)
-    U[n, cluster[n]] <- 1.0 - ((K - 1) * .Machine$double.eps)
+    U[n, cluster[n]] <- 1.0
 
   U
 }
@@ -85,38 +85,5 @@ predict.WCLR<- function(object,
     X <- as.matrix(newdata)
   }
 
-  N <- nrow(X)
-  K <- object$K
-
-  if (object$m == 1.0)
-  {
-    predicted.values <- sapply(1:N, function(n) {
-      h <- which.min(sapply(1:K, function(k) {
-        # squared Euclidean distance
-        sum((X[n,] - object$centers[,k])^2.0)
-      }))
-
-      sum(c(1, X[n,]) * object$coefficients[,h])
-    })
-  }
-  else
-  {
-    d <- matrix(rep(0, N * object$K), nrow = N, ncol = K)
-    for (n in 1:N)
-      for (k in 1:K)
-        # squared Euclidean distance
-        d[n,k] <- sum((X[n,] - object$centers[,k])^2.0)
-
-    expm <- 1.0 / (object$m - 1.0)
-
-    predicted.values <- sapply(1:N, function(n) {
-      sum(sapply(1:K, function(k) {
-        unk <- 1.0 / sum((d[n,k] / d[n,])^expm)
-
-        unk * sum(c(1, X[n,]) * object$coefficients[,k])
-      }))
-    })
-  }
-
-  predicted.values
+  predict_euclidean_cpp(X, object$centers, object$coefficients, object$m)
 }

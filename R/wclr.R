@@ -178,46 +178,6 @@ predict.WCLR.wclr <- function(object,
     X <- as.matrix(newdata)
   }
 
-  N <- nrow(X)
-  K <- object$K
-
-  if (object$m == 1.0)
-  {
-    predicted.values <- sapply(1:N, function(n) {
-      h <- which.min(sapply(1:K, function(k) {
-        # squared Mahalanobis distance
-        stats::mahalanobis(
-          X[n, ],
-          object$centers[, k],
-          object$weights[, , k],
-          inverted = TRUE)
-      }))
-
-      sum(c(1, X[n,]) * object$coefficients[,h])
-    })
-  }
-  else
-  {
-    d <- matrix(rep(0, N * object$K), nrow = N, ncol = K)
-    for (n in 1:N)
-      for (k in 1:K)
-        # squared Mahalanobis distance
-        d[n,k] <- stats::mahalanobis(
-          X[n, ],
-          object$centers[, k],
-          object$weights[, , k],
-          inverted = TRUE)
-
-    expm <- 1.0 / (object$m - 1.0)
-
-    predicted.values <- sapply(1:N, function(n) {
-      sum(sapply(1:K, function(k) {
-        unk <- 1.0 / sum((d[n,k] / d[n,])^expm)
-
-        unk * sum(c(1, X[n,]) * object$coefficients[,k])
-      }))
-    })
-  }
-
-  predicted.values
+  predict_quadratic_cpp(X, object$centers, object$weights,
+                        object$coefficients, object$m)
 }

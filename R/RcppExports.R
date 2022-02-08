@@ -90,3 +90,36 @@ swclr_lloyd_cpp <- function(U, X, y, m, wnorm, balance, itermax, trace) {
     .Call('_WCLR_swclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, wnorm, balance, itermax, trace)
 }
 
+#' Predict
+#'
+#' Predict values by nearest Euclidean distance.
+#'
+#' @param X newdata matrix
+#' @param C centers matrix
+#' @param R coefficients matrix
+#' @param m fuzzier exponent
+#'
+#' @return a vector of predictions.
+#'
+#' @export
+predict_euclidean_cpp <- function(X, C, R, m) {
+    .Call('_WCLR_predict_euclidean_cpp', PACKAGE = 'WCLR', X, C, R, m)
+}
+
+#' Predict
+#'
+#' Predict values by nearest quadratic distance.
+#'
+#' @param X newdata matrix
+#' @param C centers matrix
+#' @param W weights cube
+#' @param R coefficients matrix
+#' @param m fuzzier exponent
+#'
+#' @return a vector of predictions.
+#'
+#' @export
+predict_quadratic_cpp <- function(X, C, W, R, m) {
+    .Call('_WCLR_predict_quadratic_cpp', PACKAGE = 'WCLR', X, C, W, R, m)
+}
+

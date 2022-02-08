@@ -96,6 +96,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// predict_euclidean_cpp
+arma::vec predict_euclidean_cpp(const arma::mat& X, const arma::mat& C, const arma::mat& R, const double m);
+RcppExport SEXP _WCLR_predict_euclidean_cpp(SEXP XSEXP, SEXP CSEXP, SEXP RSEXP, SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict_euclidean_cpp(X, C, R, m));
+    return rcpp_result_gen;
+END_RCPP
+}
+// predict_quadratic_cpp
+arma::vec predict_quadratic_cpp(const arma::mat& X, const arma::mat& C, const arma::cube& W, const arma::mat& R, const double m);
+RcppExport SEXP _WCLR_predict_quadratic_cpp(SEXP XSEXP, SEXP CSEXP, SEXP WSEXP, SEXP RSEXP, SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict_quadratic_cpp(X, C, W, R, m));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_WCLR_clr_lloyd_cpp", (DL_FUNC) &_WCLR_clr_lloyd_cpp, 6},
@@ -103,6 +132,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_WCLR_kplane_lloyd_cpp", (DL_FUNC) &_WCLR_kplane_lloyd_cpp, 7},
     {"_WCLR_wclr_lloyd_cpp", (DL_FUNC) &_WCLR_wclr_lloyd_cpp, 8},
     {"_WCLR_swclr_lloyd_cpp", (DL_FUNC) &_WCLR_swclr_lloyd_cpp, 8},
+    {"_WCLR_predict_euclidean_cpp", (DL_FUNC) &_WCLR_predict_euclidean_cpp, 4},
+    {"_WCLR_predict_quadratic_cpp", (DL_FUNC) &_WCLR_predict_quadratic_cpp, 5},
     {NULL, NULL, 0}
 };
 
