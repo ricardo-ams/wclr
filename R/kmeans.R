@@ -69,6 +69,14 @@ kmeans.default <- function(X, y, K, m = 1.0,
 
   ## output ###################################################################
 
+  # ensure the correct layout
+  model$coefficients  <- as.matrix(model$coefficients)
+  model$fitted.values <- as.matrix(model$fitted.values)
+  model$residuals     <- as.matrix(model$residuals)
+  model$centers       <- as.matrix(model$centers)
+  model$membership    <- as.matrix(model$membership)
+
+  # name columns and rows
   if (is.null(colnames(X)))
     var_names <- paste("X", 1:P, sep = "")
   else
