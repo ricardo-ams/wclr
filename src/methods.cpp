@@ -62,7 +62,7 @@ void update_centers(arma::mat &C,
         if (unk > 0.0)
         {
           W += unk;
-          centroid += (X.row(n).t() - C.col(k)) * (unk / W);
+          centroid += (X.row(n).t() - centroid) * (unk / W);
         }
       }
 
@@ -169,8 +169,12 @@ double J(const arma::mat &U,
   double loss = 0.0;
 
   for (int k = 0; k < K; k++)
+  {
     for (int n = 0; n < N; n++)
+    {
       loss += U(n, k) * diss(n, k);
+    }
+  }
 
   return loss;
 }
@@ -289,10 +293,11 @@ Rcpp::List
     );
     rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
+    double loss = J(arma::pow(U, m), E);
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
       Rcpp::Named("m")             = m,
-      Rcpp::Named("loss")          = J(arma::pow(U, m), E),
+      Rcpp::Named("loss")          = loss,
       Rcpp::Named("coefficients")  = coefficients,
       Rcpp::Named("fitted.values") = fitted_values,
       Rcpp::Named("residuals")     = residuals,
@@ -416,10 +421,11 @@ Rcpp::List
     );
     rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
+    double loss = J(arma::pow(U, m), E);
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
       Rcpp::Named("m")             = m,
-      Rcpp::Named("loss")          = J(arma::pow(U, m), E),
+      Rcpp::Named("loss")          = loss,
       Rcpp::Named("coefficients")  = coefficients,
       Rcpp::Named("fitted.values") = fitted_values,
       Rcpp::Named("residuals")     = residuals,
@@ -564,11 +570,12 @@ Rcpp::List
     );
     rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
+    double loss = J(arma::pow(U, m), E);
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
       Rcpp::Named("gamma")         = gamma,
       Rcpp::Named("m")             = m,
-      Rcpp::Named("loss")          = J(arma::pow(U, m), E),
+      Rcpp::Named("loss")          = loss,
       Rcpp::Named("coefficients")  = coefficients,
       Rcpp::Named("fitted.values") = fitted_values,
       Rcpp::Named("residuals")     = residuals,
@@ -600,18 +607,20 @@ void update_weights_qpl(arma::cube &W,
 
       for (int n = 0; n < N; n++)
       {
-        arma::colvec XC = X.row(n).t() - C.col(k);
-        Q += U(n, k) * (XC * XC.t());
+        arma::colvec xc = X.row(n).t() - C.col(k);
+        Q += U(n, k) * (xc * xc.t());
       }
 
       arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
 
       if (weights.is_finite())
+      {
         W.slice(k) = weights;
+      }
     }
     catch (...)
     {
-      Rcpp::Rcerr << "error while updating weights 'update_weights_qpl'" << std::endl;
+      Rcpp::Rcerr << "error while updating weights."  << std::endl;
     }
   }
 }
@@ -632,20 +641,22 @@ void update_weights_qpg(arma::cube &W,
     {
       for (int n = 0; n < N; n++)
       {
-        arma::colvec XC = X.row(n).t() - C.col(k);
-        Q += U(n, k) * (XC * XC.t());
+        arma::colvec xc = X.row(n).t() - C.col(k);
+        Q += U(n, k) * (xc * xc.t());
       }
     }
 
     const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
 
     if (weights.is_finite())
+    {
       for (int k = 0; k < K; k++)
         W.slice(k) = weights;
+    }
   }
   catch (...)
   {
-    Rcpp::Rcerr << "error while updating weights 'update_weights_qpg'" << std::endl;
+    Rcpp::Rcerr << "error while updating weights." << std::endl;
   }
 }
 
@@ -670,14 +681,18 @@ void update_weights_epl(arma::cube &W,
         aux += U(n, k) * t;
       }
 
-      const arma::colvec weights = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+      const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+
+      const arma::mat weights = arma::diagmat(w);
 
       if (weights.is_finite())
-        W.slice(k) = arma::diagmat(weights);
+      {
+        W.slice(k) = weights;
+      }
     }
     catch (...)
     {
-      Rcpp::Rcerr << "error while updating weights 'update_weights_epl'" << std::endl;
+      Rcpp::Rcerr << "error while updating weights." << std::endl;
     }
   }
 }
@@ -706,15 +721,19 @@ void update_weights_epg(arma::cube &W,
       }
     }
 
-    const arma::colvec weights = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+    const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+
+    const arma::mat weights = arma::diagmat(w);
 
     if (weights.is_finite())
+    {
       for (int k = 0; k < K; k++)
-        W.slice(k) = arma::diagmat(weights);
+        W.slice(k) = weights;
+    }
   }
   catch (...)
   {
-    Rcpp::Rcerr << "error while updating weights 'update_weights_epg'" << std::endl;
+    Rcpp::Rcerr << "error while updating weights." << std::endl;
   }
 }
 
@@ -871,12 +890,13 @@ Rcpp::List
     );
     rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
+    double loss = J(arma::pow(U, m), E);
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
       Rcpp::Named("alpha")         = alpha,
       Rcpp::Named("m")             = m,
       Rcpp::Named("wnorm")         = wnorm,
-      Rcpp::Named("loss")          = J(arma::pow(U, m), E),
+      Rcpp::Named("loss")          = loss,
       Rcpp::Named("coefficients")  = coefficients,
       Rcpp::Named("fitted.values") = fitted_values,
       Rcpp::Named("residuals")     = residuals,
@@ -1143,11 +1163,12 @@ Rcpp::List
     );
     rcpp_lloyd.attr("class") = "WCLR.lloyd";
 
+    double loss = J(arma::pow(U, m), E);
     auto rcpp_model = Rcpp::List::create(
       Rcpp::Named("K")             = K,
       Rcpp::Named("m")             = m,
       Rcpp::Named("wnorm")         = wnorm,
-      Rcpp::Named("loss")          = J(arma::pow(U, m), E),
+      Rcpp::Named("loss")          = loss,
       Rcpp::Named("coefficients")  = coefficients,
       Rcpp::Named("fitted.values") = fitted_values,
       Rcpp::Named("residuals")     = residuals,
