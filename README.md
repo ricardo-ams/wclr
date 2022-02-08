@@ -6,7 +6,19 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of WCLR is to …
+The goal of the Weighted Clusterwise Linear Regression (WCLR) method …
+
+This package also implements the following methods:
+
+-   Clusterwise Linear Regression
+-   Fuzzy C-regression Models
+-   K-plane Regression
+-   K-means Clustering + Linear Regression
+-   Fuzzy C-means Clustering + Linear Regression
+
+This is an **alpha** version of the WCLR package. It is subject to many
+interface changes and bug fixes. However, it is mature enough to be
+downloaded and used in data fitting experiments.
 
 ## Installation
 
