@@ -4,7 +4,7 @@
 \alias{wclr_lloyd_cpp}
 \title{Weighted Clusterwise Linear Regression}
 \usage{
-wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, itermax, trace)
+wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, itermax)
 }
 \arguments{
 \item{U}{random membership matrix.}
@@ -22,9 +22,6 @@ a fuzzy k-partition when \code{m > 1.0}.}
 \code{"qpg"}, \code{"qpl"}.}
 
 \item{itermax}{the maximum number of iterations allowed in Lloyd algorithm.}
-
-\item{trace}{logical value. If \code{TRUE}, produce a trace information of
-the progress of the algorithm.}
 }
 \value{
 returns an object of class \code{WCLR.wclr}.

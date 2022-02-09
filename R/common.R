@@ -42,26 +42,6 @@ hard_kpartition <- function(N, K)
   U
 }
 
-#' @export
-print.WCLR.trace.info <- function(x, ...)
-{
-  cat(sprintf("%5d %25s %25.5f\n", x$iter, x$step, x$loss))
-}
-
-#' @export
-print.WCLR.trace.error <- function(x, ...)
-{
-  cat(sprintf("ERROR: %s\n", x$error))
-}
-
-#' @export
-print.WCLR.trace <- function(x, ...)
-{
-  cat(sprintf("%5s %25s %25s\n", "iter", "step", "loss"))
-  for (log in x)
-    print(log)
-}
-
 #' Predict values
 #'
 #' @param object object of class inheriting from "WCLR".
@@ -72,7 +52,7 @@ print.WCLR.trace <- function(x, ...)
 #' @return produces a vector of predictions.
 #'
 #' @export
-predict.WCLR<- function(object,
+predict.WCLR <- function(object,
                          newdata, ...)
 {
   if (!is.null(object$formula))

@@ -4,7 +4,7 @@
 \alias{kmeans_lloyd_cpp}
 \title{K-means Linear Regression}
 \usage{
-kmeans_lloyd_cpp(U, X, y, m, itermax, trace)
+kmeans_lloyd_cpp(U, X, y, m, itermax)
 }
 \arguments{
 \item{U}{random membership matrix.}
@@ -17,9 +17,6 @@ kmeans_lloyd_cpp(U, X, y, m, itermax, trace)
 a fuzzy k-partition when \code{m > 1.0}.}
 
 \item{itermax}{the maximum number of iterations allowed in Lloyd algorithm.}
-
-\item{trace}{logical value. If \code{TRUE}, produce a trace information of
-the progress of the algorithm.}
 }
 \value{
 returns an object of class \code{WCLR.kmeans}.

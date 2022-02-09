@@ -7,174 +7,173 @@
 using namespace Rcpp;
 using namespace arma;
 
-void update_coefficients(arma::mat &R,
-                         const arma::mat &U,
-                         const arma::mat &X,
-                         const arma::colvec &y)
-{
-  const int K = U.n_cols;
-
-  for (int k = 0; k < K; k++)
+void
+  update_coefficients(arma::mat &R,
+                      const arma::mat &U,
+                      const arma::mat &X,
+                      const arma::colvec &y)
   {
-    try
-    {
-      arma::mat W = arma::diagmat(U.col(k));
-
-      arma::colvec coefs = arma::solve(X.t() * W * X, X.t() * W * y);
-
-      if (coefs.is_finite())
-        R.col(k) = coefs;
-    }
-    catch (...)
-    {
-      Rcpp::Rcerr << "error while updating coefficients 'update_coefficients'" << std::endl;
-    }
-  }
-}
-
-void update_centers(arma::mat &C,
-                    const arma::mat &U,
-                    const arma::mat &X)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const int P = X.n_cols;
-
-  for (int k = 0; k < K; k++)
-  {
-    // Compute the weighted arithmetic mean M of a data set using the
-    // recurrence relation
-    //   M(n) = M(n-1) + (data[n] - M(n-1)) (w(n)/(W(n-1) + w(n)))
-    //   W(n) = W(n-1) + w(n)
-    // Reference:
-    //   GNU GSL 2.6 source code - https://www.gnu.org/software/gsl/doc/html/statistics.html?highlight=weighted%20mean#c.gsl_stats_wmean
-
-    try
-    {
-      arma::colvec centroid(P, arma::fill::zeros);
-
-      double W = 0.0;
-
-      for (int n = 0; n < N; n++)
-      {
-        const double unk = U(n, k);
-
-        if (unk > 0.0)
-        {
-          W += unk;
-          centroid += (X.row(n).t() - centroid) * (unk / W);
-        }
-      }
-
-      if (centroid.is_finite())
-        C.col(k) = centroid;
-    }
-    catch (...)
-    {
-      Rcpp::Rcerr << "error while updating centers 'update_centers'" << std::endl;
-    }
-  }
-}
-
-template <typename F>
-bool update_membership(arma::mat &U,
-                       const double m,
-                       const F &diss)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const double exp = 1.0 / (m - 1.0);
-
-  bool converged = true;
-
-  for (int n = 0; n < N; n++)
-  {
-    try
-    {
-      arma::rowvec membership(K, arma::fill::zeros);
-
-      for (int k = 0; k < K; k++)
-      {
-        double unk = 0.0;
-
-        for (int h = 0; h < K; h++)
-          unk += std::pow(diss(n, k) / diss(n, h), exp);
-
-        unk = 1.0 / unk;
-
-        if (std::fabs(U(n, k) - unk) > 0.01)
-          converged = false;
-
-        membership(k) = unk;
-      }
-
-      if (membership.is_finite())
-        U.row(n) = membership;
-    }
-    catch (...)
-    {
-      Rcpp::Rcerr << "error while updating membership 'update_membership'" << std::endl;
-    }
-  }
-
-  return converged;
-}
-
-template <typename F>
-bool update_membership(arma::mat &U,
-                       const F &diss)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-
-  bool converged = true;
-
-  for (int n = 0; n < N; n++)
-  {
-    int min_k = -1;
-    double min_dnk = std::numeric_limits<double>().max();
+    const int K = U.n_cols;
 
     for (int k = 0; k < K; k++)
     {
-      const double dnk = diss(n, k);
-
-      if (dnk < min_dnk)
+      try
       {
-        min_dnk = dnk;
-        min_k   = k;
+        arma::mat W = arma::diagmat(U.col(k));
+
+        arma::colvec coefs = arma::solve(X.t() * W * X, X.t() * W * y);
+
+        if (coefs.is_finite())
+          R.col(k) = coefs;
+      }
+      catch (...) { }
+    }
+  }
+
+void
+  update_centers(arma::mat &C,
+                 const arma::mat &U,
+                 const arma::mat &X)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const int P = X.n_cols;
+
+    for (int k = 0; k < K; k++)
+    {
+      try
+      {
+        // Compute the weighted arithmetic mean M of a data set using the
+        // recurrence relation
+        //   M(n) = M(n-1) + (data[n] - M(n-1)) (w(n)/(W(n-1) + w(n)))
+        //   W(n) = W(n-1) + w(n)
+        // Reference:
+        //   GNU GSL 2.6 source code - https://www.gnu.org/software/gsl/doc/html/statistics.html?highlight=weighted%20mean#c.gsl_stats_wmean
+
+        arma::colvec centroid(P, arma::fill::zeros);
+
+        double W = 0.0;
+
+        for (int n = 0; n < N; n++)
+        {
+          const double unk = U(n, k);
+
+          if (unk > 0.0)
+          {
+            W += unk;
+            centroid += (X.row(n).t() - centroid) * (unk / W);
+          }
+        }
+
+        if (centroid.is_finite())
+          C.col(k) = centroid;
+      }
+      catch (...) {}
+    }
+  }
+
+template <typename F>
+bool
+  update_membership(arma::mat &U,
+                    const double m,
+                    const F &diss)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const double exp = 1.0 / (m - 1.0);
+
+    bool converged = true;
+
+    for (int n = 0; n < N; n++)
+    {
+      try
+      {
+        arma::rowvec membership(K, arma::fill::zeros);
+
+        for (int k = 0; k < K; k++)
+        {
+          double unk = 0.0;
+
+          for (int h = 0; h < K; h++)
+            unk += std::pow(diss(n, k) / diss(n, h), exp);
+
+          unk = 1.0 / unk;
+
+          if (std::fabs(U(n, k) - unk) > 0.01)
+            converged = false;
+
+          membership(k) = unk;
+        }
+
+        if (membership.is_finite())
+          U.row(n) = membership;
+      }
+      catch (...) {}
+    }
+
+    return converged;
+  }
+
+template <typename F>
+bool
+  update_membership(arma::mat &U,
+                    const F &diss)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+
+    bool converged = true;
+
+    for (int n = 0; n < N; n++)
+    {
+      try
+      {
+        int min_k = -1;
+        double min_dnk = std::numeric_limits<double>().max();
+
+        for (int k = 0; k < K; k++)
+        {
+          const double dnk = diss(n, k);
+
+          if (dnk < min_dnk)
+          {
+            min_dnk = dnk;
+            min_k   = k;
+          }
+        }
+
+        if (U(n, min_k) !=  1.0)
+        {
+          converged = false;
+          U.row(n).zeros();
+          U(n, min_k) = 1.0;
+        }
+      } catch (...) {}
+    }
+
+    return converged;
+  }
+
+template <typename F>
+double
+  J(const arma::mat &U,
+    const F &diss)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+
+    double loss = 0.0;
+
+    for (int k = 0; k < K; k++)
+    {
+      for (int n = 0; n < N; n++)
+      {
+        loss += U(n, k) * diss(n, k);
       }
     }
 
-    if (U(n, min_k) !=  1.0)
-    {
-      converged = false;
-      U.row(n).zeros();
-      U(n, min_k) = 1.0;
-    }
+    return loss;
   }
-
-  return converged;
-}
-
-template <typename F>
-double J(const arma::mat &U,
-         const F &diss)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-
-  double loss = 0.0;
-
-  for (int k = 0; k < K; k++)
-  {
-    for (int n = 0; n < N; n++)
-    {
-      loss += U(n, k) * diss(n, k);
-    }
-  }
-
-  return loss;
-}
 
 //' Clusterwise Linear Regression
 //'
@@ -186,8 +185,6 @@ double J(const arma::mat &U,
 //' @param m fuzzier exponent. Gives a hard k-partition if \code{m = 1.0} and
 //'   a fuzzy k-partition when \code{m > 1.0}.
 //' @param itermax the maximum number of iterations allowed in Lloyd algorithm.
-//' @param trace logical value. If \code{TRUE}, produce a trace information of
-//'   the progress of the algorithm.
 //'
 //' @return returns an object of class \code{WCLR.clr}.
 //'
@@ -200,14 +197,11 @@ Rcpp::List
                 const arma::mat &X,
                 const arma::colvec &y,
                 const double m,
-                const int itermax,
-                const bool trace)
+                const int itermax)
   {
     const int N = X.n_rows; // number of observations
     const int P = X.n_cols; // number of variables
     const int K = U.n_cols; // number of clusters
-
-    Rcpp::List log = Rcpp::List::create();
 
     // augmented input matrix for regression with intercept
     arma::mat X1(N, P + 1, arma::fill::ones);
@@ -243,16 +237,6 @@ Rcpp::List
         residuals.col(k)     = y - fitted_values.col(k);
       }
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-            Rcpp::Named("iter") = iterations,
-            Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-            Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       // check convergence
       if (converged || iterations == itermax)
         break;
@@ -264,25 +248,13 @@ Rcpp::List
         converged = update_membership(U, E);
       else
         converged = update_membership(U, m, E);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = "update kpartition",
-          Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
     }
 
     // compute centroids
-    arma::mat centers(P, K, arma::fill::randu);
+    arma::mat centers(P, K, arma::fill::zeros);
     update_centers(centers, arma::pow(U, m), X);
 
     // build Rcpp model
-    log.attr("class") = "WCLR.trace";
-
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
@@ -300,8 +272,7 @@ Rcpp::List
       Rcpp::Named("residuals")     = residuals,
       Rcpp::Named("centers")       = centers,
       Rcpp::Named("membership")    = U,
-      Rcpp::Named("algorithm")     = rcpp_lloyd,
-      Rcpp::Named("trace")         = log
+      Rcpp::Named("algorithm")     = rcpp_lloyd
     );
     rcpp_model.attr("class") = "WCLR.clr";
 
@@ -325,14 +296,11 @@ Rcpp::List
                    const arma::mat &X,
                    const arma::colvec &y,
                    const double m,
-                   const int itermax,
-                   const bool trace)
+                   const int itermax)
   {
     const int N = X.n_rows; // number of observations
     const int P = X.n_cols; // number of variables
     const int K = U.n_cols; // number of clusters
-
-    Rcpp::List log = Rcpp::List::create();
 
     // augmented input matrix for regression with intercept
     arma::mat X1(N, P + 1, arma::fill::ones);
@@ -362,16 +330,6 @@ Rcpp::List
 
       update_centers(centers, Um, X);
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       // check convergence
       if (converged || iterations == itermax)
         break;
@@ -383,20 +341,10 @@ Rcpp::List
         converged = update_membership(U, E);
       else
         converged = update_membership(U, m, E);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = "update kpartition",
-          Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
     }
 
     // compute coefficients
-    arma::mat coefficients(P + 1, K, arma::fill::randu);
+    arma::mat coefficients(P + 1, K, arma::fill::zeros);
     arma::mat fitted_values(N, K, arma::fill::zeros);
     arma::mat residuals(N, K, arma::fill::zeros);
 
@@ -409,8 +357,6 @@ Rcpp::List
     }
 
     // build Rcpp model
-    log.attr("class") = "WCLR.trace";
-
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
@@ -428,8 +374,7 @@ Rcpp::List
       Rcpp::Named("residuals")     = residuals,
       Rcpp::Named("centers")       = centers,
       Rcpp::Named("membership")    = U,
-      Rcpp::Named("algorithm")     = rcpp_lloyd,
-      Rcpp::Named("trace")         = log
+      Rcpp::Named("algorithm")     = rcpp_lloyd
     );
     rcpp_model.attr("class") = "WCLR.kmeans";
 
@@ -455,14 +400,11 @@ Rcpp::List
                    const arma::colvec &y,
                    const double gamma,
                    const double m,
-                   const int itermax,
-                   const bool trace)
+                   const int itermax)
   {
     const int N = X.n_rows; // number of observations
     const int P = X.n_cols; // number of variables
     const int K = U.n_cols; // number of clusters
-
-    Rcpp::List log = Rcpp::List::create();
 
     // augmented input matrix for regression with intercept
     arma::mat X1(N, P + 1, arma::fill::ones);
@@ -512,27 +454,7 @@ Rcpp::List
         residuals.col(k)     = y - fitted_values.col(k);
       }
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       update_centers(centers, Um, X);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
 
       // check convergence
       if (converged || iterations == itermax)
@@ -545,21 +467,9 @@ Rcpp::List
         converged = update_membership(U, E);
       else
         converged = update_membership(U, m, E);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = "update kpartition",
-          Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
     }
 
     // build Rcpp model
-    log.attr("class") = "WCLR.trace";
-
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
@@ -578,161 +488,143 @@ Rcpp::List
       Rcpp::Named("residuals")     = residuals,
       Rcpp::Named("centers")       = centers,
       Rcpp::Named("membership")    = U,
-      Rcpp::Named("algorithm")     = rcpp_lloyd,
-      Rcpp::Named("trace")         = log
+      Rcpp::Named("algorithm")     = rcpp_lloyd
     );
     rcpp_model.attr("class") = "WCLR.kplane";
 
     return rcpp_model;
   }
 
-
-void update_weights_qpl(arma::cube &W,
-                        const arma::mat &U,
-                        const arma::mat &C,
-                        const arma::mat &X)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const int P = C.n_rows;
-
-  for (int k = 0; k < K; k++)
+void
+  update_weights_qpl(arma::cube &W,
+                     const arma::mat &U,
+                     const arma::mat &C,
+                     const arma::mat &X)
   {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const int P = C.n_rows;
+
+    for (int k = 0; k < K; k++)
+    {
+      try {
+        arma::mat Q(P, P, arma::fill::zeros);
+
+        for (int n = 0; n < N; n++)
+        {
+          arma::colvec xc = X.row(n).t() - C.col(k);
+          Q += U(n, k) * (xc * xc.t());
+        }
+
+        arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+
+        if (weights.is_finite() && weights.is_symmetric())
+          W.slice(k) = weights;
+      }
+      catch (...) {}
+    }
+  }
+
+void
+  update_weights_qpg(arma::cube &W,
+                     const arma::mat &U,
+                     const arma::mat &C,
+                     const arma::mat &X)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const int P = C.n_rows;
+
     try
     {
       arma::mat Q(P, P, arma::fill::zeros);
 
-      for (int n = 0; n < N; n++)
+      for (int k = 0; k < K; k++)
       {
-        arma::colvec xc = X.row(n).t() - C.col(k);
-        Q += U(n, k) * (xc * xc.t());
+        for (int n = 0; n < N; n++)
+        {
+          arma::colvec xc = X.row(n).t() - C.col(k);
+          Q += U(n, k) * (xc * xc.t());
+        }
       }
 
-      arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+      const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
 
-      if (weights.is_finite())
-      {
-        W.slice(k) = weights;
-      }
+      if (weights.is_finite() && weights.is_symmetric())
+        for (int k = 0; k < K; k++)
+          W.slice(k) = weights;
     }
-    catch (...)
-    {
-      Rcpp::Rcerr << "error while updating weights."  << std::endl;
-    }
+    catch (...) {}
   }
-}
 
-void update_weights_qpg(arma::cube &W,
-                        const arma::mat &U,
-                        const arma::mat &C,
-                        const arma::mat &X)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const int P = C.n_rows;
-
-  try {
-    arma::mat Q(P, P, arma::fill::zeros);
+void
+  update_weights_epl(arma::cube &W,
+                     const arma::mat &U,
+                     const arma::mat &C,
+                     const arma::mat &X)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const int P = C.n_rows;
 
     for (int k = 0; k < K; k++)
     {
-      for (int n = 0; n < N; n++)
+      try
       {
-        arma::colvec xc = X.row(n).t() - C.col(k);
-        Q += U(n, k) * (xc * xc.t());
+        arma::colvec aux(P, arma::fill::zeros);
+
+        for (int n = 0; n < N; n++)
+        {
+          arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
+          aux += U(n, k) * t;
+        }
+
+        const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
+
+        const arma::mat weights = arma::diagmat(w);
+
+        if (weights.is_finite() && weights.is_symmetric())
+          W.slice(k) = weights;
       }
-    }
-
-    const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
-
-    if (weights.is_finite())
-    {
-      for (int k = 0; k < K; k++)
-        W.slice(k) = weights;
+      catch (...) {}
     }
   }
-  catch (...)
-  {
-    Rcpp::Rcerr << "error while updating weights." << std::endl;
-  }
-}
 
-void update_weights_epl(arma::cube &W,
-                        const arma::mat &U,
-                        const arma::mat &C,
-                        const arma::mat &X)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const int P = C.n_rows;
-
-  for (int k = 0; k < K; k++)
+void
+  update_weights_epg(arma::cube &W,
+                     const arma::mat &U,
+                     const arma::mat &C,
+                     const arma::mat &X)
   {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+    const int P = C.n_rows;
+
     try
     {
       arma::colvec aux(P, arma::fill::zeros);
 
-      for (int n = 0; n < N; n++)
+      for (int k = 0; k < K; k++)
       {
-        arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
-        aux += U(n, k) * t;
+        for (int n = 0; n < N; n++)
+        {
+          const double unk = U(n, k);
+
+          arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
+          aux += unk * t;
+        }
       }
 
       const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
 
       const arma::mat weights = arma::diagmat(w);
 
-      if (weights.is_finite())
-      {
-        W.slice(k) = weights;
-      }
+      if (weights.is_finite() && weights.is_symmetric())
+        for (int k = 0; k < K; k++)
+          W.slice(k) = weights;
     }
-    catch (...)
-    {
-      Rcpp::Rcerr << "error while updating weights." << std::endl;
-    }
+    catch (...) {}
   }
-}
-
-void update_weights_epg(arma::cube &W,
-                        const arma::mat &U,
-                        const arma::mat &C,
-                        const arma::mat &X)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-  const int P = C.n_rows;
-
-  try
-  {
-    arma::colvec aux(P, arma::fill::zeros);
-
-    for (int k = 0; k < K; k++)
-    {
-      for (int n = 0; n < N; n++)
-      {
-        const double unk = U(n, k);
-
-        arma::colvec t = arma::pow(X.row(n).t() - C.col(k), 2.0);
-        aux += unk * t;
-      }
-    }
-
-    const arma::colvec w = arma::as_scalar(arma::prod(arma::pow(aux, 1.0 / P))) / aux;
-
-    const arma::mat weights = arma::diagmat(w);
-
-    if (weights.is_finite())
-    {
-      for (int k = 0; k < K; k++)
-        W.slice(k) = weights;
-    }
-  }
-  catch (...)
-  {
-    Rcpp::Rcerr << "error while updating weights." << std::endl;
-  }
-}
 
 //' Weighted Clusterwise Linear Regression
 //'
@@ -756,14 +648,11 @@ Rcpp::List
                  const double alpha,
                  const double m,
                  const std::string wnorm,
-                 const int itermax,
-                 const bool trace)
+                 const int itermax)
   {
     const int N = X.n_rows; // number of observations
     const int P = X.n_cols; // number of variables
     const int K = U.n_cols; // number of clusters
-
-    Rcpp::List log = Rcpp::List::create();
 
     // augmented input matrix for regression with intercept
     arma::mat X1(N, P + 1, arma::fill::ones);
@@ -813,27 +702,7 @@ Rcpp::List
         residuals.col(k)     = y - fitted_values.col(k);
       }
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       update_centers(centers, Um, X);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
 
       if (wnorm == "epg")
         update_weights_epg(weights, Um, centers, X);
@@ -843,16 +712,6 @@ Rcpp::List
         update_weights_qpg(weights, Um, centers, X);
       else if (wnorm == "qpl")
         update_weights_qpl(weights, Um, centers, X);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
 
       // check convergence
       if (converged || iterations == itermax)
@@ -865,21 +724,9 @@ Rcpp::List
         converged = update_membership(U, E);
       else
         converged = update_membership(U, m, E);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = "update kpartition",
-          Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
     }
 
     // build Rcpp model
-    log.attr("class") = "WCLR.trace";
-
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
@@ -900,8 +747,7 @@ Rcpp::List
       Rcpp::Named("centers")       = centers,
       Rcpp::Named("weights")       = weights,
       Rcpp::Named("membership")    = U,
-      Rcpp::Named("algorithm")     = rcpp_lloyd,
-      Rcpp::Named("trace")         = log
+      Rcpp::Named("algorithm")     = rcpp_lloyd
     );
     rcpp_model.attr("class") = "WCLR.wclr";
 
@@ -909,69 +755,30 @@ Rcpp::List
   }
 
 template <typename F1, typename F2>
-void update_balance_pg(arma::vec &alpha,
-                       arma::vec &gamma,
-                       const arma::mat &U,
-                       const F1 &Ey,
-                       const F2 &Ex)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-
-  try
+void
+  update_balance_pg(arma::vec &alphas,
+                    arma::vec &gammas,
+                    const arma::mat &U,
+                    const F1 &Ey,
+                    const F2 &Ex)
   {
-    double dx = 0.0;
-    double dy = 0.0;
+    const int N = U.n_rows;
+    const int K = U.n_cols;
 
-    for (int k = 0; k < K; k++)
-    {
-      for (int n = 0; n < N; n++)
-      {
-        const double unk = U(n, k);
-
-        dy += unk * Ey(n, k);
-        dx += unk * Ex(n, k);
-      }
-    }
-
-    double a = std::sqrt(dy / dx);
-    double g = std::sqrt(dx / dy);
-
-    if (std::isfinite(a) && std::isfinite(g))
-    {
-      alpha.fill(a);
-      gamma.fill(g);
-    }
-  }
-  catch (...)
-  {
-    Rcpp::Rcerr << "error while updating balancing 'update_balance_pg'" << std::endl;
-  }
-}
-
-template <typename F1, typename F2>
-void update_balance_pl(arma::vec &alpha,
-                       arma::vec &gamma,
-                       const arma::mat &U,
-                       const F1 &Ey,
-                       const F2 &Ex)
-{
-  const int N = U.n_rows;
-  const int K = U.n_cols;
-
-  for (int k = 0; k < K; k++)
-  {
     try
     {
       double dx = 0.0;
       double dy = 0.0;
 
-      for (int n = 0; n < N; n++)
+      for (int k = 0; k < K; k++)
       {
-        const double unk = U(n, k);
+        for (int n = 0; n < N; n++)
+        {
+          const double unk = U(n, k);
 
-        dy += unk * Ey(n, k);
-        dx += unk * Ex(n, k);
+          dy += unk * Ey(n, k);
+          dx += unk * Ex(n, k);
+        }
       }
 
       double a = std::sqrt(dy / dx);
@@ -979,16 +786,51 @@ void update_balance_pl(arma::vec &alpha,
 
       if (std::isfinite(a) && std::isfinite(g))
       {
-        alpha(k) = a;
-        gamma(k) = g;
+        alphas.fill(a);
+        gammas.fill(g);
       }
     }
-    catch (...)
+    catch (...) {}
+  }
+
+template <typename F1, typename F2>
+void
+  update_balance_pl(arma::vec &alphas,
+                    arma::vec &gammas,
+                    const arma::mat &U,
+                    const F1 &Ey,
+                    const F2 &Ex)
+  {
+    const int N = U.n_rows;
+    const int K = U.n_cols;
+
+    for (int k = 0; k < K; k++)
     {
-      Rcpp::Rcerr << "error while updating balancing 'update_balance_pl'" << std::endl;
+      try
+      {
+        double dx = 0.0;
+        double dy = 0.0;
+
+        for (int n = 0; n < N; n++)
+        {
+          const double unk = U(n, k);
+
+          dy += unk * Ey(n, k);
+          dx += unk * Ex(n, k);
+        }
+
+        double a = std::sqrt(dy / dx);
+        double g = std::sqrt(dx / dy);
+
+        if (std::isfinite(a) && std::isfinite(g))
+        {
+          alphas(k) = a;
+          gammas(k) = g;
+        }
+      }
+      catch (...) {}
     }
   }
-}
 
 //' Self-balanced Weighted Clusterwise Linear Regression
 //'
@@ -1012,14 +854,11 @@ Rcpp::List
                   const double m,
                   const std::string wnorm,
                   const std::string balance,
-                  const int itermax,
-                  const bool trace)
+                  const int itermax)
   {
     const int N = X.n_rows; // number of observations
     const int P = X.n_cols; // number of variables
     const int K = U.n_cols; // number of clusters
-
-    Rcpp::List log = Rcpp::List::create();
 
     // augmented input matrix for regression with intercept
     arma::mat X1(N, P + 1, arma::fill::ones);
@@ -1071,27 +910,7 @@ Rcpp::List
         residuals.col(k)     = y - fitted_values.col(k);
       }
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update coefficients",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       update_centers(centers, Um, X);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update centers",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
 
       if (wnorm == "epg")
         update_weights_epg(weights, Um, centers, X);
@@ -1102,30 +921,10 @@ Rcpp::List
       else if (wnorm == "qpl")
         update_weights_qpl(weights, Um, centers, X);
 
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update weights",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
-
       if (balance == "pg")
         update_balance_pg(alphas, gammas, Um, Ey, Ex);
       else if (balance == "pl")
         update_balance_pl(alphas, gammas, Um, Ey, Ex);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = (iterations == 0)? "initialization" : "update balance",
-          Rcpp::Named("loss") = J(Um, E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
 
       // check convergence
       if (converged || iterations == itermax)
@@ -1138,21 +937,9 @@ Rcpp::List
         converged = update_membership(U, E);
       else
         converged = update_membership(U, m, E);
-
-      if (trace)
-      {
-        Rcpp::List info = Rcpp::List::create(
-          Rcpp::Named("iter") = iterations,
-          Rcpp::Named("step") = "update kpartition",
-          Rcpp::Named("loss") = J(arma::pow(U, m), E));
-        info.attr("class") = "WCLR.trace.info";
-        log.push_back(info);
-      }
     }
 
     // build Rcpp model
-    log.attr("class") = "WCLR.trace";
-
     auto rcpp_lloyd = Rcpp::List::create(
       Rcpp::Named("iter.max")   = itermax,
       Rcpp::Named("iterations") = iterations,
@@ -1174,12 +961,45 @@ Rcpp::List
       Rcpp::Named("alphas")        = alphas,
       Rcpp::Named("gammas")        = gammas,
       Rcpp::Named("membership")    = U,
-      Rcpp::Named("algorithm")     = rcpp_lloyd,
-      Rcpp::Named("trace")         = log
+      Rcpp::Named("algorithm")     = rcpp_lloyd
     );
     rcpp_model.attr("class") = "WCLR.swclr";
 
     return rcpp_model;
+  }
+
+template <typename F>
+arma::vec
+  predict(const arma::mat &X,
+          const arma::mat &R,
+          const double m,
+          const F &dist)
+  {
+    const int N = X.n_rows;
+    const int P = X.n_cols;
+    const int K = R.n_cols;
+
+    arma::mat U(N, K, arma::fill::zeros);
+
+    if (m == 1.0)
+      update_membership(U, dist);
+    else
+      update_membership(U, m, dist);
+
+    arma::vec predicted_values(N, arma::fill::zeros);
+
+    for (int n = 0; n < N; n++)
+    {
+      predicted_values(n) = 0.0;
+
+      for (int k = 0; k < K; k++)
+      {
+        predicted_values(n) += U(n, k) *
+          (R.col(k)(0) + dot(X.row(n), R.col(k).tail(P)));
+      }
+    }
+
+    return predicted_values;
   }
 
 //' Predict
@@ -1201,10 +1021,6 @@ arma::vec
                         const arma::mat &R,
                         const double m)
   {
-    const int N = X.n_rows;
-    const int P = X.n_cols;
-    const int K = C.n_cols;
-
     auto dist = [&](int n, int k)
     {
       // squared Euclidean distance
@@ -1212,31 +1028,7 @@ arma::vec
                  X.row(n).t() - C.col(k));
     };
 
-    arma::mat U(N, K, arma::fill::zeros);
-
-    if (m == 1.0)
-    {
-      update_membership(U, dist);
-    }
-    else
-    {
-      update_membership(U, m, dist);
-    }
-
-    arma::vec predicted_values(N, arma::fill::zeros);
-
-    for (int n = 0; n < N; n++)
-    {
-      predicted_values(n) = 0.0;
-
-      for (int k = 0; k < K; k++)
-      {
-        predicted_values(n) += U(n, k) *
-          (R.col(k)(0) + dot(X.row(n), R.col(k).tail(P)));
-      }
-    }
-
-    return predicted_values;
+    return predict(X, R, m, dist);
   }
 
 //' Predict
@@ -1260,10 +1052,6 @@ arma::vec
                         const arma::mat  &R,
                         const double m)
   {
-    const int N = X.n_rows;
-    const int P = X.n_cols;
-    const int K = C.n_cols;
-
     auto dist = [&](int n, int k)
     {
       // quadratic dissimilarity
@@ -1271,29 +1059,5 @@ arma::vec
       return arma::as_scalar(xc.t() * W.slice(k) * xc);
     };
 
-    arma::mat U(N, K, arma::fill::zeros);
-
-    if (m == 1.0)
-    {
-      update_membership(U, dist);
-    }
-    else
-    {
-      update_membership(U, m, dist);
-    }
-
-    arma::vec predicted_values(N, arma::fill::zeros);
-
-    for (int n = 0; n < N; n++)
-    {
-      predicted_values(n) = 0.0;
-
-      for (int k = 0; k < K; k++)
-      {
-        predicted_values(n) += U(n, k) *
-          (R.col(k)(0) + dot(X.row(n), R.col(k).tail(P)));
-      }
-    }
-
-    return predicted_values;
+    return predict(X, R, m, dist);
   }

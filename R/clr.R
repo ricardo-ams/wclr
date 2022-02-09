@@ -18,8 +18,6 @@ clr <- function(X, ...) UseMethod("clr")
 #' @param nstart number of random runs.
 #' @param iter.max the maximum number of iterations allowed in Lloyd algorithm.
 #' @param algorithm optimization algorithm. One of: \code{"Lloyd"}.
-#' @param trace logical value. If \code{TRUE}, produce a trace information of
-#'   the progress of the algorithm.
 #' @param ... not used.
 #'
 #' @return returns an object of class \code{wclr.clr}.
@@ -28,8 +26,7 @@ clr <- function(X, ...) UseMethod("clr")
 clr.default <- function(X, y, K, m = 1.0,
                         nstart = 1L,
                         iter.max = 100L,
-                        algorithm = c("Lloyd"),
-                        trace = FALSE, ...)
+                        algorithm = c("Lloyd"), ...)
 {
   ## check input ##############################################################
 
@@ -55,8 +52,6 @@ clr.default <- function(X, y, K, m = 1.0,
 
   stopifnot(algorithm %in% c("Lloyd"))
 
-  trace <- as.logical(trace)
-
   ## model fitting ############################################################
 
   model <- list(loss = Inf)
@@ -70,7 +65,7 @@ clr.default <- function(X, y, K, m = 1.0,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- clr_lloyd_cpp(U, X, y, m, iter.max, trace)
+      rmodel <- clr_lloyd_cpp(U, X, y, m, iter.max)
 
       if (rmodel$loss < model$loss)
         model <- rmodel
@@ -110,8 +105,7 @@ clr.formula <- function(formula, data, K,
                         m = 1.0,
                         nstart = 1L,
                         iter.max = 100L,
-                        algorithm = c("Lloyd"),
-                        trace = FALSE, ...)
+                        algorithm = c("Lloyd"), ...)
 {
   dataset <- model.frame(formula = formula, data = data)
   X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
@@ -121,8 +115,7 @@ clr.formula <- function(formula, data, K,
                        m = m,
                        nstart = nstart,
                        iter.max = iter.max,
-                       algorithm = algorithm,
-                       trace = trace, ...)
+                       algorithm = algorithm, ...)
 
   model$call <- match.call()
   model$formula <- formula

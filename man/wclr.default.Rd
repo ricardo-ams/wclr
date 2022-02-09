@@ -14,7 +14,6 @@
   nstart = 1L,
   iter.max = 100L,
   algorithm = c("Lloyd"),
-  trace = FALSE,
   ...
 )
 }
@@ -38,9 +37,6 @@ a fuzzy k-partition when \code{m > 1.0}.}
 \item{iter.max}{the maximum number of iterations allowed in Lloyd algorithm.}
 
 \item{algorithm}{optimization algorithm. One of: \code{"Lloyd"}.}
-
-\item{trace}{logical value. If \code{TRUE}, produce a trace information of
-the progress of the algorithm.}
 
 \item{...}{not used.}
 }

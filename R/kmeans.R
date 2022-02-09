@@ -18,8 +18,7 @@ kmeans <- function(X, ...) UseMethod("kmeans")
 kmeans.default <- function(X, y, K, m = 1.0,
                            nstart = 1L,
                            iter.max = 100L,
-                           algorithm = c("Lloyd"),
-                           trace = FALSE, ...)
+                           algorithm = c("Lloyd"), ...)
 {
   ## check input ##############################################################
 
@@ -45,8 +44,6 @@ kmeans.default <- function(X, y, K, m = 1.0,
 
   stopifnot(algorithm %in% c("Lloyd"))
 
-  trace <- as.logical(trace)
-
   ## model fitting ############################################################
 
   model <- list(loss = Inf)
@@ -60,7 +57,7 @@ kmeans.default <- function(X, y, K, m = 1.0,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- kmeans_lloyd_cpp(U, X, y, m, iter.max, trace)
+      rmodel <- kmeans_lloyd_cpp(U, X, y, m, iter.max)
 
       if (rmodel$loss < model$loss)
         model <- rmodel
@@ -101,8 +98,7 @@ kmeans.formula <- function(formula, data, K,
                            m = 1.0,
                            nstart = 1L,
                            iter.max = 100L,
-                           algorithm = c("Lloyd"),
-                           trace = FALSE, ...)
+                           algorithm = c("Lloyd"), ...)
 {
   dataset <- model.frame(formula = formula, data = data)
   X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
@@ -112,8 +108,7 @@ kmeans.formula <- function(formula, data, K,
                           m = m,
                           nstart = nstart,
                           iter.max = iter.max,
-                          algorithm = algorithm,
-                          trace = trace, ...)
+                          algorithm = algorithm, ...)
 
   model$call <- match.call()
   model$formula <- formula

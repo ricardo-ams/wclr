@@ -22,8 +22,7 @@ wclr.default <- function(X, y, K, alpha, wnorm,
                          m = 1.0,
                          nstart = 1L,
                          iter.max = 100L,
-                         algorithm = c("Lloyd"),
-                         trace = FALSE, ...)
+                         algorithm = c("Lloyd"), ...)
 {
   ## check input ##############################################################
 
@@ -54,8 +53,6 @@ wclr.default <- function(X, y, K, alpha, wnorm,
 
   stopifnot(algorithm %in% c("Lloyd"))
 
-  trace <- as.logical(trace)
-
   ## model fitting ############################################################
 
   model <- list(loss = Inf)
@@ -69,7 +66,7 @@ wclr.default <- function(X, y, K, alpha, wnorm,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, iter.max, trace)
+      rmodel <- wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, iter.max)
 
       if (rmodel$loss < model$loss)
         model <- rmodel
@@ -112,8 +109,7 @@ wclr.formula <- function(formula, data, K, alpha, wnorm,
                          m = 1.0,
                          nstart = 1L,
                          iter.max = 100L,
-                         algorithm = c("Lloyd"),
-                         trace = FALSE, ...)
+                         algorithm = c("Lloyd"), ...)
 {
   dataset <- model.frame(formula = formula, data = data)
   X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
@@ -123,8 +119,7 @@ wclr.formula <- function(formula, data, K, alpha, wnorm,
                         m = m,
                         nstart = nstart,
                         iter.max = iter.max,
-                        algorithm = algorithm,
-                        trace = trace, ...)
+                        algorithm = algorithm, ...)
 
   model$call <- match.call()
   model$formula <- formula

@@ -4,7 +4,7 @@
 \alias{kplane_lloyd_cpp}
 \title{K-plane Regression}
 \usage{
-kplane_lloyd_cpp(U, X, y, gamma, m, itermax, trace)
+kplane_lloyd_cpp(U, X, y, gamma, m, itermax)
 }
 \arguments{
 \item{U}{random membership matrix.}
@@ -19,9 +19,6 @@ kplane_lloyd_cpp(U, X, y, gamma, m, itermax, trace)
 a fuzzy k-partition when \code{m > 1.0}.}
 
 \item{itermax}{the maximum number of iterations allowed in Lloyd algorithm.}
-
-\item{trace}{logical value. If \code{TRUE}, produce a trace information of
-the progress of the algorithm.}
 }
 \value{
 returns an object of class \code{WCLR.kplane}.

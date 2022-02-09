@@ -11,16 +11,14 @@
 #' @param m fuzzier exponent. Gives a hard k-partition if \code{m = 1.0} and
 #'   a fuzzy k-partition when \code{m > 1.0}.
 #' @param itermax the maximum number of iterations allowed in Lloyd algorithm.
-#' @param trace logical value. If \code{TRUE}, produce a trace information of
-#'   the progress of the algorithm.
 #'
 #' @return returns an object of class \code{WCLR.clr}.
 #'
 #' @seealso \code{\link{clr.default}} for a user-friendly version of this method.
 #'
 #' @export
-clr_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
-    .Call('_WCLR_clr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax, trace)
+clr_lloyd_cpp <- function(U, X, y, m, itermax) {
+    .Call('_WCLR_clr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax)
 }
 
 #' K-means Linear Regression
@@ -34,8 +32,8 @@ clr_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #' @seealso \code{\link{kmeans.default}} for a user-friendly version of this method.
 #'
 #' @export
-kmeans_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
-    .Call('_WCLR_kmeans_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax, trace)
+kmeans_lloyd_cpp <- function(U, X, y, m, itermax) {
+    .Call('_WCLR_kmeans_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, itermax)
 }
 
 #' K-plane Regression
@@ -50,8 +48,8 @@ kmeans_lloyd_cpp <- function(U, X, y, m, itermax, trace) {
 #' @seealso \code{\link{kplane.default}} for a user-friendly version of this method.
 #'
 #' @export
-kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax, trace) {
-    .Call('_WCLR_kplane_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, gamma, m, itermax, trace)
+kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax) {
+    .Call('_WCLR_kplane_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, gamma, m, itermax)
 }
 
 #' Weighted Clusterwise Linear Regression
@@ -68,8 +66,8 @@ kplane_lloyd_cpp <- function(U, X, y, gamma, m, itermax, trace) {
 #' @seealso \code{\link{wclr.default}} for a user-friendly version of this method.
 #'
 #' @export
-wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax, trace) {
-    .Call('_WCLR_wclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, alpha, m, wnorm, itermax, trace)
+wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax) {
+    .Call('_WCLR_wclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, alpha, m, wnorm, itermax)
 }
 
 #' Self-balanced Weighted Clusterwise Linear Regression
@@ -86,8 +84,8 @@ wclr_lloyd_cpp <- function(U, X, y, alpha, m, wnorm, itermax, trace) {
 #' @seealso \code{\link{swclr.default}} for a user-friendly version of this method.
 #'
 #' @export
-swclr_lloyd_cpp <- function(U, X, y, m, wnorm, balance, itermax, trace) {
-    .Call('_WCLR_swclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, wnorm, balance, itermax, trace)
+swclr_lloyd_cpp <- function(U, X, y, m, wnorm, balance, itermax) {
+    .Call('_WCLR_swclr_lloyd_cpp', PACKAGE = 'WCLR', U, X, y, m, wnorm, balance, itermax)
 }
 
 #' Predict

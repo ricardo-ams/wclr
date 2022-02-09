@@ -20,8 +20,7 @@ kplane.default <- function(X, y, K, gamma,
                            m = 1.0,
                            nstart = 1L,
                            iter.max = 100L,
-                           algorithm = c("Lloyd"),
-                           trace = FALSE, ...)
+                           algorithm = c("Lloyd"), ...)
 {
   ## check input ##############################################################
 
@@ -50,8 +49,6 @@ kplane.default <- function(X, y, K, gamma,
 
   stopifnot(algorithm %in% c("Lloyd"))
 
-  trace <- as.logical(trace)
-
   ## model fitting ############################################################
 
   model <- list(loss = Inf)
@@ -65,7 +62,7 @@ kplane.default <- function(X, y, K, gamma,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- kplane_lloyd_cpp(U, X, y, gamma, m, iter.max, trace)
+      rmodel <- kplane_lloyd_cpp(U, X, y, gamma, m, iter.max)
 
       if (rmodel$loss < model$loss)
         model <- rmodel
@@ -106,8 +103,7 @@ kplane.formula <- function(formula, data, K, gamma,
                            m = 1.0,
                            nstart = 1L,
                            iter.max = 100L,
-                           algorithm = c("Lloyd"),
-                           trace = FALSE, ...)
+                           algorithm = c("Lloyd"), ...)
 {
   dataset <- model.frame(formula = formula, data = data)
   X <- as.matrix(dataset[, 2:ncol(dataset), drop = FALSE])
@@ -117,8 +113,7 @@ kplane.formula <- function(formula, data, K, gamma,
                           m = m,
                           nstart = nstart,
                           iter.max = iter.max,
-                          algorithm = algorithm,
-                          trace = trace, ...)
+                          algorithm = algorithm, ...)
 
   model$call <- match.call()
   model$formula <- formula

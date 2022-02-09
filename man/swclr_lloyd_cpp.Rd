@@ -4,7 +4,7 @@
 \alias{swclr_lloyd_cpp}
 \title{Self-balanced Weighted Clusterwise Linear Regression}
 \usage{
-swclr_lloyd_cpp(U, X, y, m, wnorm, balance, itermax, trace)
+swclr_lloyd_cpp(U, X, y, m, wnorm, balance, itermax)
 }
 \arguments{
 \item{U}{random membership matrix.}
@@ -22,9 +22,6 @@ a fuzzy k-partition when \code{m > 1.0}.}
 \item{balance}{self-balance type. One of: \code{"pg"}, \code{"pl"}.}
 
 \item{itermax}{the maximum number of iterations allowed in Lloyd algorithm.}
-
-\item{trace}{logical value. If \code{TRUE}, produce a trace information of
-the progress of the algorithm.}
 }
 \value{
 returns an object of class \code{WCLR.swclr}.
