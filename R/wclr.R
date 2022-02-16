@@ -66,10 +66,10 @@ wclr.default <- function(X, y, K, alpha, wnorm,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, iter.max)
+      run_model <- wclr_lloyd_cpp(U, X, y, alpha, m, wnorm, iter.max)
 
-      if (rmodel$loss < model$loss)
-        model <- rmodel
+      if (is.finite(run_model$loss) && run_model$loss < model$loss)
+        model <- run_model
     }
   }
 

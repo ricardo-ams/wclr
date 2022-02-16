@@ -67,7 +67,7 @@ swclr.default <- function(X, y, K, balance, wnorm,
 
       run_model <- swclr_lloyd_cpp(U, X, y, m, wnorm, balance, iter.max)
 
-      if (run_model$loss < model$loss)
+      if (is.finite(run_model$loss) && run_model$loss < model$loss)
         model <- run_model
     }
   }

@@ -57,10 +57,10 @@ kmeans.default <- function(X, y, K, m = 1.0,
       else
         U <- fuzzy_kpartition(N, K)
 
-      rmodel <- kmeans_lloyd_cpp(U, X, y, m, iter.max)
+      run_model <- kmeans_lloyd_cpp(U, X, y, m, iter.max)
 
-      if (rmodel$loss < model$loss)
-        model <- rmodel
+      if (is.finite(run_model$loss) && run_model$loss < model$loss)
+        model <- run_model
     }
   }
 
