@@ -516,7 +516,10 @@ void
           Q += U(n, k) * (xc * xc.t());
         }
 
-        arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+        // compute Q inverse
+        arma::mat Qi = arma::solve(Q, arma::eye(arma::size(Q)));
+        // compute weights
+        arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * Qi;
 
         if (weights.is_finite() && weights.is_symmetric())
           W.slice(k) = weights;
@@ -548,7 +551,10 @@ void
         }
       }
 
-      const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * arma::inv(Q);
+      // compute Q inverse
+      arma::mat Qi = arma::solve(Q, arma::eye(arma::size(Q)));
+      // compute weights
+      const arma::mat weights = std::pow(arma::det(Q), (1.0 / P)) * Qi;
 
       if (weights.is_finite() && weights.is_symmetric())
         for (int k = 0; k < K; k++)
